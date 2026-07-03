@@ -1,0 +1,743 @@
+{
+  "schema": "gec-alignment-cases/v1",
+  "description": "Manual and automated acceptance fixtures for Chinese GEC multi-target alignment.",
+  "lcsLimit": 2000000,
+  "cases": [
+    {
+      "name": "replace-basic",
+      "kind": "single-sample",
+      "input": {
+        "id": "replace_basic",
+        "source": "他喜欢苹果。",
+        "references": [
+          "他喜欢香蕉。"
+        ],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "他喜欢香蕉。"
+          }
+        ]
+      },
+      "expect": {
+        "editOps": [
+          "replace"
+        ],
+        "groups": [
+          {
+            "source_text": "苹果",
+            "items": {
+              "ref_1": {
+                "op": "replace",
+                "text": "香蕉"
+              },
+              "model_a": {
+                "op": "replace",
+                "text": "香蕉"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "delete-prefix",
+      "kind": "single-sample",
+      "input": {
+        "id": "delete_prefix",
+        "source": "昨天我去学校。",
+        "references": [
+          "我去学校。"
+        ],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "我去学校。"
+          }
+        ]
+      },
+      "expect": {
+        "editOps": [
+          "delete"
+        ],
+        "groups": [
+          {
+            "source_text": "昨天",
+            "items": {
+              "ref_1": {
+                "op": "delete",
+                "text": "昨天",
+                "segments": [
+                  {
+                    "op": "delete",
+                    "text": "昨天"
+                  }
+                ]
+              },
+              "model_a": {
+                "op": "delete",
+                "text": "昨天"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "insert-middle",
+      "kind": "single-sample",
+      "input": {
+        "id": "insert_middle",
+        "source": "我喜欢学习。",
+        "references": [
+          "我很喜欢学习。"
+        ],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "我很喜欢学习。"
+          }
+        ]
+      },
+      "expect": {
+        "editOps": [
+          "insert"
+        ],
+        "groups": [
+          {
+            "source_start": 1,
+            "source_end": 1,
+            "source_text": "",
+            "items": {
+              "ref_1": {
+                "op": "insert",
+                "text": "很"
+              },
+              "model_a": {
+                "op": "insert",
+                "text": "很"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "no-change",
+      "kind": "single-sample",
+      "input": {
+        "id": "no_change",
+        "source": "我喜欢学习。",
+        "references": [
+          "我喜欢学习。"
+        ],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "我喜欢学习。"
+          }
+        ]
+      },
+      "expect": {
+        "editGroups": [],
+        "renderSegmentTypes": [
+          "plain"
+        ],
+        "message": "No modifications should be shown."
+      }
+    },
+    {
+      "name": "delete-all",
+      "kind": "single-sample",
+      "input": {
+        "id": "delete_all",
+        "source": "我喜欢学习。",
+        "references": [],
+        "candidates": [
+          {
+            "id": "empty_model",
+            "text": ""
+          }
+        ]
+      },
+      "expect": {
+        "editOps": [
+          "delete"
+        ],
+        "groups": [
+          {
+            "source_text": "我喜欢学习。",
+            "items": {
+              "empty_model": {
+                "op": "delete",
+                "text": "我喜欢学习。"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "insert-prefix",
+      "kind": "single-sample",
+      "input": {
+        "id": "insert_prefix",
+        "source": "喜欢学习。",
+        "references": [
+          "我喜欢学习。"
+        ],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "我喜欢学习。"
+          }
+        ]
+      },
+      "expect": {
+        "editOps": [
+          "insert"
+        ],
+        "groups": [
+          {
+            "source_start": 0,
+            "source_end": 0,
+            "items": {
+              "ref_1": {
+                "op": "insert",
+                "text": "我"
+              },
+              "model_a": {
+                "op": "insert",
+                "text": "我"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "insert-suffix",
+      "kind": "single-sample",
+      "input": {
+        "id": "insert_suffix",
+        "source": "我喜欢学习",
+        "references": [
+          "我喜欢学习。"
+        ],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "我喜欢学习。"
+          }
+        ]
+      },
+      "expect": {
+        "editOps": [
+          "insert"
+        ],
+        "groups": [
+          {
+            "source_start": 5,
+            "source_end": 5,
+            "items": {
+              "ref_1": {
+                "op": "insert",
+                "text": "。"
+              },
+              "model_a": {
+                "op": "insert",
+                "text": "。"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "reorder-short",
+      "kind": "single-sample",
+      "input": {
+        "id": "reorder_short",
+        "source": "我喜欢学习中文。",
+        "references": [
+          "我喜欢中文学习。"
+        ],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "我喜欢中文学习。"
+          }
+        ]
+      },
+      "expect": {
+        "editOps": [
+          "replace"
+        ],
+        "forbiddenOps": [
+          "move",
+          "reorder"
+        ],
+        "groups": [
+          {
+            "source_text": "学习中文",
+            "items": {
+              "ref_1": {
+                "op": "replace",
+                "text": "中文学习"
+              },
+              "model_a": {
+                "op": "replace",
+                "text": "中文学习"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "space-delete",
+      "kind": "single-sample",
+      "input": {
+        "id": "space_delete",
+        "source": "我 喜欢学习。",
+        "references": [
+          "我喜欢学习。"
+        ],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "我喜欢学习。"
+          }
+        ]
+      },
+      "expect": {
+        "preserveWhitespace": true,
+        "editOps": [
+          "delete"
+        ],
+        "groups": [
+          {
+            "source_start": 1,
+            "source_end": 2,
+            "source_text": " ",
+            "items": {
+              "ref_1": {
+                "op": "delete",
+                "text": " "
+              },
+              "model_a": {
+                "op": "delete",
+                "text": " "
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "duplicate-candidate-id",
+      "kind": "single-sample",
+      "input": {
+        "id": "duplicate_candidate_id",
+        "source": "我昨天去学校。",
+        "references": [],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "我昨天去了学校。"
+          },
+          {
+            "id": "model_a",
+            "text": "我昨天去学校了。"
+          }
+        ]
+      },
+      "expect": {
+        "targetIds": [
+          "model_a",
+          "model_a_2"
+        ],
+        "uniqueTargetIds": true,
+        "noItemOverwrite": true
+      }
+    },
+    {
+      "name": "candidate-id-conflicts-reference",
+      "kind": "single-sample",
+      "input": {
+        "id": "candidate_id_conflicts_reference",
+        "source": "我昨天去学校。",
+        "references": [
+          "我昨天去了学校。"
+        ],
+        "candidates": [
+          {
+            "id": "ref_1",
+            "text": "我昨天去学校了。"
+          }
+        ]
+      },
+      "expect": {
+        "targetIds": [
+          "ref_1",
+          "ref_1_2"
+        ],
+        "targetTypes": {
+          "ref_1": "reference",
+          "ref_1_2": "candidate"
+        },
+        "noItemOverwrite": true
+      }
+    },
+    {
+      "name": "overlapping-span",
+      "kind": "single-sample",
+      "input": {
+        "id": "overlapping_span",
+        "source": "他对这个问题感到很有兴趣。",
+        "references": [
+          "他对这个问题很感兴趣。"
+        ],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "他对这个问题很感兴趣。"
+          }
+        ]
+      },
+      "expect": {
+        "editOps": [
+          "replace"
+        ],
+        "groups": [
+          {
+            "source_text": "感到很有兴趣",
+            "items": {
+              "ref_1": {
+                "op": "replace",
+                "text": "很感兴趣",
+                "segments": [
+                  {
+                    "op": "delete",
+                    "text": "感到"
+                  },
+                  {
+                    "op": "equal",
+                    "text": "很"
+                  },
+                  {
+                    "op": "replace",
+                    "text": "感"
+                  },
+                  {
+                    "op": "equal",
+                    "text": "兴趣"
+                  }
+                ]
+              },
+              "model_a": {
+                "op": "replace",
+                "text": "很感兴趣"
+              }
+            }
+          }
+        ],
+        "note": "The group text must be computed from the whole merged span, not from a single local edit."
+      }
+    },
+    {
+      "name": "anchor-pure-insert",
+      "kind": "single-sample",
+      "input": {
+        "id": "anchor_pure_insert",
+        "source": "我喜欢学习。",
+        "references": [
+          "我很喜欢学习。"
+        ],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "我喜欢学习。"
+          }
+        ]
+      },
+      "expect": {
+        "editOps": [
+          "insert"
+        ],
+        "groups": [
+          {
+            "source_start": 1,
+            "source_end": 1,
+            "source_text": "",
+            "items": {
+              "ref_1": {
+                "op": "insert",
+                "text": "很",
+                "segments": [
+                  {
+                    "op": "insert",
+                    "text": "很"
+                  }
+                ]
+              },
+              "model_a": {
+                "op": "anchor",
+                "text": "",
+                "segments": [
+                  {
+                    "op": "anchor",
+                    "text": ""
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "renderSegments": [
+          {
+            "lineId": "source",
+            "type": "anchor",
+            "text": ""
+          },
+          {
+            "lineId": "ref_1",
+            "type": "insert",
+            "text": "很"
+          }
+        ]
+      }
+    },
+    {
+      "name": "leading-space-delete",
+      "kind": "single-sample",
+      "input": {
+        "id": "leading_space_delete",
+        "source": " 我喜欢学习。",
+        "references": [
+          "我喜欢学习。"
+        ],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "我喜欢学习。"
+          }
+        ]
+      },
+      "expect": {
+        "preserveWhitespace": true,
+        "editOps": [
+          "delete"
+        ],
+        "groups": [
+          {
+            "source_start": 0,
+            "source_end": 1,
+            "source_text": " ",
+            "items": {
+              "ref_1": {
+                "op": "delete",
+                "text": " "
+              },
+              "model_a": {
+                "op": "delete",
+                "text": " "
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "no-reference",
+      "kind": "single-sample",
+      "input": {
+        "id": "no_reference",
+        "source": "我喜欢学习。",
+        "references": [],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "我很喜欢学习。"
+          }
+        ]
+      },
+      "expect": {
+        "targetIds": [
+          "model_a"
+        ],
+        "targetTypes": {
+          "model_a": "candidate"
+        },
+        "referenceTargets": []
+      }
+    },
+    {
+      "name": "empty-reference-ignored",
+      "kind": "single-sample",
+      "input": {
+        "id": "empty_reference_ignored",
+        "source": "他喜欢学习。",
+        "references": [
+          "",
+          "他很喜欢学习。",
+          ""
+        ],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "他很喜欢学习。"
+          }
+        ]
+      },
+      "expect": {
+        "ignoredReferences": [
+          "",
+          ""
+        ],
+        "targetIds": [
+          "ref_1",
+          "model_a"
+        ],
+        "referenceTargets": [
+          {
+            "id": "ref_1",
+            "text": "他很喜欢学习。"
+          }
+        ]
+      }
+    },
+    {
+      "name": "whitespace-json-preserved",
+      "kind": "single-sample",
+      "input": {
+        "id": "whitespace_json_preserved",
+        "source": "我喜欢学习。",
+        "references": [
+          "   "
+        ],
+        "candidates": [
+          {
+            "id": "model_a",
+            "text": "  我喜欢学习。  "
+          }
+        ]
+      },
+      "expect": {
+        "preserveWhitespace": true,
+        "referenceTargets": [
+          {
+            "id": "ref_1",
+            "text": "   "
+          }
+        ],
+        "candidateTargets": [
+          {
+            "id": "model_a",
+            "text": "  我喜欢学习。  "
+          }
+        ],
+        "note": "Only the exact empty string is ignored; whitespace-only JSON strings remain valid text."
+      }
+    },
+    {
+      "name": "multi-sample",
+      "kind": "multi-sample",
+      "input": [
+        {
+          "id": "multi_1",
+          "source": "他喜欢跑步。",
+          "references": [
+            "他喜欢跑步。"
+          ],
+          "candidates": [
+            {
+              "id": "model_a",
+              "text": "他很喜欢跑步。"
+            }
+          ]
+        },
+        {
+          "id": "multi_2",
+          "source": "今天下雨。",
+          "references": [],
+          "candidates": [
+            {
+              "id": "model_b",
+              "text": "今天没有下雨。"
+            }
+          ]
+        }
+      ],
+      "expect": {
+        "sampleCount": 2,
+        "sampleIds": [
+          "multi_1",
+          "multi_2"
+        ],
+        "lazyDiffPerSelectedSample": true
+      }
+    },
+    {
+      "name": "invalid-sample",
+      "kind": "invalid",
+      "input": {
+        "invalidJsonText": "{\"source\":\"我喜欢学习。\",\"candidates\":[}",
+        "samples": [
+          {
+            "id": "missing_source",
+            "references": [],
+            "candidates": [
+              {
+                "id": "model_a",
+                "text": "我喜欢学习。"
+              }
+            ]
+          },
+          {
+            "id": "empty_candidates",
+            "source": "我喜欢学习。",
+            "references": [],
+            "candidates": []
+          },
+          {
+            "id": "candidate_text_not_string",
+            "source": "我喜欢学习。",
+            "references": [],
+            "candidates": [
+              {
+                "id": "model_a",
+                "text": 123
+              }
+            ]
+          }
+        ]
+      },
+      "expect": {
+        "reject": true,
+        "keepPreviousSamples": true,
+        "showError": true
+      }
+    },
+    {
+      "name": "lcs-limit-exceeded",
+      "kind": "limit",
+      "input": {
+        "generator": {
+          "sourceChar": "甲",
+          "sourceCount": 1500,
+          "candidateChar": "乙",
+          "candidateCount": 1500
+        }
+      },
+      "expect": {
+        "sourceLength": 1500,
+        "candidateLength": 1500,
+        "lcsCellCount": 2250000,
+        "limit": 2000000,
+        "rejectDiff": true,
+        "showError": true
+      }
+    }
+  ]
+}
