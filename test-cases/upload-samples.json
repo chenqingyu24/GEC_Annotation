@@ -1,0 +1,150 @@
+[
+  {
+    "id": "upload_replace_basic",
+    "source": "他喜欢苹果。",
+    "references": ["他喜欢香蕉。"],
+    "candidates": [
+      {
+        "id": "model_a",
+        "text": "他喜欢香蕉。"
+      },
+      {
+        "id": "model_b",
+        "text": "他喜欢苹果。"
+      }
+    ]
+  },
+  {
+    "id": "upload_delete_prefix",
+    "source": "好的，我明天去学校。",
+    "references": [],
+    "candidates": [
+      {
+        "id": "model_a",
+        "text": "我明天去学校。"
+      }
+    ]
+  },
+  {
+    "id": "upload_insert_middle",
+    "source": "我昨天去学校。",
+    "references": ["我昨天去了学校。"],
+    "candidates": [
+      {
+        "id": "model_a",
+        "text": "我昨天去了学校。"
+      },
+      {
+        "id": "model_b",
+        "text": "我昨天去过学校。"
+      }
+    ]
+  },
+  {
+    "id": "upload_no_change",
+    "source": "我昨天去了学校。",
+    "references": ["我昨天去了学校。"],
+    "candidates": [
+      {
+        "id": "model_a",
+        "text": "我昨天去了学校。"
+      }
+    ]
+  },
+  {
+    "id": "upload_delete_all",
+    "source": "我昨天去了学校。",
+    "references": [],
+    "candidates": [
+      {
+        "id": "empty_model",
+        "text": ""
+      }
+    ]
+  },
+  {
+    "id": "upload_insert_prefix_suffix",
+    "source": "我昨天去学校",
+    "references": ["其实我昨天去学校。"],
+    "candidates": [
+      {
+        "id": "prefix_model",
+        "text": "其实我昨天去学校"
+      },
+      {
+        "id": "suffix_model",
+        "text": "我昨天去学校。"
+      }
+    ]
+  },
+  {
+    "id": "upload_reorder_short",
+    "source": "我把作业昨天写完了。",
+    "references": [],
+    "candidates": [
+      {
+        "id": "model_a",
+        "text": "我昨天把作业写完了。"
+      }
+    ]
+  },
+  {
+    "id": "upload_space_delete",
+    "source": "我 喜欢学习。",
+    "references": [],
+    "candidates": [
+      {
+        "id": "model_a",
+        "text": "我喜欢学习。"
+      }
+    ]
+  },
+  {
+    "id": "upload_duplicate_candidate_id",
+    "source": "我昨天去学校。",
+    "references": [],
+    "candidates": [
+      {
+        "id": "model_a",
+        "text": "我昨天去了学校。"
+      },
+      {
+        "id": "model_a",
+        "text": "我昨天去过学校。"
+      }
+    ]
+  },
+  {
+    "id": "upload_anchor_pure_insert",
+    "source": "我喜欢学习。",
+    "references": ["我很喜欢学习。"],
+    "candidates": [
+      {
+        "id": "model_a",
+        "text": "我喜欢学习。"
+      }
+    ]
+  },
+  {
+    "id": "upload_empty_reference_ignored",
+    "source": "他喜欢学习。",
+    "references": ["", "他很喜欢学习。"],
+    "candidates": [
+      {
+        "id": "model_a",
+        "text": "他很喜欢学习。"
+      }
+    ]
+  },
+  {
+    "id": "upload_whitespace_preserved",
+    "source": " 我喜欢学习。 ",
+    "references": [" 我喜欢学习。"],
+    "candidates": [
+      {
+        "id": "model_a",
+        "text": "我喜欢学习。 "
+      }
+    ]
+  }
+]
