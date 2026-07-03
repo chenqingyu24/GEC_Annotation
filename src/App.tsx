@@ -82,26 +82,20 @@ export default function App() {
         <h1>中文语法纠错多候选对齐工具</h1>
       </header>
 
-      <div className="input-grid">
-        <ManualInputPanel onSubmit={handleManualSubmit} onClear={handleClear} />
-        <JsonUploadPanel
-          onSamplesLoaded={handleSamplesLoaded}
-          onWarning={setWarning}
-          onError={setError}
-        />
-      </div>
+      <div className="workspace-layout">
+        <aside className="control-column" aria-label="Input options">
+          <ManualInputPanel onSubmit={handleManualSubmit} onClear={handleClear} />
+          <JsonUploadPanel
+            onSamplesLoaded={handleSamplesLoaded}
+            onWarning={setWarning}
+            onError={setError}
+          />
 
-      <div className="status-stack" aria-live="polite">
-        {warning ? <div className="status-message warning-message">{warning}</div> : null}
-        {displayedError ? (
-          <div className="status-message error-message">{displayedError}</div>
-        ) : null}
-      </div>
-
-      {samples.length > 0 ? (
-        <section className="results-shell" aria-labelledby="results-title">
-          <div className="section-heading">
-            <h2 id="results-title">当前样本结果</h2>
+          <div className="status-stack" aria-live="polite">
+            {warning ? <div className="status-message warning-message">{warning}</div> : null}
+            {displayedError ? (
+              <div className="status-message error-message">{displayedError}</div>
+            ) : null}
           </div>
 
           <SampleNavigator
@@ -109,31 +103,61 @@ export default function App() {
             currentIndex={currentIndex}
             onChange={handleSampleChange}
           />
+        </aside>
 
-          {currentResult.view ? (
-            <div className="result-stack">
-              {currentResult.view.edit_groups.length === 0 ? (
-                <div className="panel empty-result">该样本没有检测到修改。</div>
-              ) : (
-                <>
-                <EditGroupTable
-                  view={currentResult.view}
-                  selectedGroupId={selectedGroupId}
-                  onSelectGroup={setSelectedGroupId}
-                />
-                <HighlightView
-                  lines={currentResult.view.render_lines}
-                  selectedGroupId={selectedGroupId}
-                  onSelectGroup={setSelectedGroupId}
-                />
-                </>
-              )}
-              <JsonPreview view={currentResult.view} />
+        <section className="preview-column" aria-labelledby="results-title">
+          <div className="section-heading">
+            <h2 id="results-title">当前样本结果</h2>
+          </div>
+
+          {samples.length === 0 ? (
+            <div className="panel empty-result">
+              No sample loaded. Enter text or upload JSON to preview the alignment.
             </div>
+          ) : currentResult.view ? (
+            <ResultContent
+              view={currentResult.view}
+              selectedGroupId={selectedGroupId}
+              onSelectGroup={setSelectedGroupId}
+            />
           ) : null}
         </section>
-      ) : null}
+      </div>
     </main>
+  );
+}
+
+interface ResultContentProps {
+  view: DiffView;
+  selectedGroupId: string | null;
+  onSelectGroup: (groupId: string) => void;
+}
+
+export function ResultContent({
+  view,
+  selectedGroupId,
+  onSelectGroup
+}: ResultContentProps) {
+  const hasEditGroups = view.edit_groups.length > 0;
+
+  return (
+    <div className="result-stack">
+      <HighlightView
+        lines={view.render_lines}
+        selectedGroupId={selectedGroupId}
+        onSelectGroup={onSelectGroup}
+      />
+      {hasEditGroups ? (
+        <EditGroupTable
+          view={view}
+          selectedGroupId={selectedGroupId}
+          onSelectGroup={onSelectGroup}
+        />
+      ) : (
+        <div className="panel empty-result">该样本没有检测到修改。</div>
+      )}
+      <JsonPreview view={view} />
+    </div>
   );
 }
 

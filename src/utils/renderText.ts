@@ -21,7 +21,7 @@ export function buildRenderLines(
 ): RenderLine[] {
   if (editGroups.length === 0) {
     return [
-      plainLine("source", "source", "Source", source),
+      plainLine("source", "source", "source", source),
       ...targets.map((target) => plainLine(target.id, target.type, target.id, target.text))
     ];
   }
@@ -33,7 +33,7 @@ export function buildRenderLines(
     {
       id: "source",
       type: "source",
-      label: "Source",
+      label: "source",
       text: source,
       segments: buildSourceSegments(sourceChars, groups, allEdits)
     },
@@ -89,7 +89,8 @@ function appendSourceGroupSegments(
   segments: RenderSegment[],
   sourceChars: string[],
   group: EditGroup,
-  groupEdits: Edit[]
+  groupEdits: Edit[],
+  equalOpMode: "actual" | "equal" = "actual"
 ): void {
   const anchors = new Set<number>();
   const sourceOps: EditOp[] = Array.from(
@@ -133,7 +134,8 @@ function appendSourceGroupSegments(
       segments,
       sourceChars.slice(sourceCursor, runEnd).join(""),
       group.group_id,
-      op
+      op,
+      equalOpMode
     );
     sourceCursor = runEnd;
   }
@@ -175,7 +177,8 @@ function appendSourceTextSegment(
   segments: RenderSegment[],
   text: string,
   groupId: string,
-  op: EditOp
+  op: EditOp,
+  equalOpMode: "actual" | "equal" = "actual"
 ): void {
   if (text === "") {
     return;
@@ -197,7 +200,7 @@ function appendSourceTextSegment(
     text,
     type,
     group_id: groupId,
-    op
+    op: equalOpMode === "equal" ? "equal" : op
   });
 }
 
@@ -228,13 +231,14 @@ function buildTargetLine(
     if (isPointSpan(group)) {
       targetCursor = appendPointGroupSegments(segments, targetCursor, group, groupTargetEdits);
     } else if (groupTargetEdits.length === 0) {
+      appendSourceGroupSegments(
+        segments,
+        sourceChars,
+        group,
+        editsForGroup(group, allEdits),
+        "equal"
+      );
       const groupLength = group.source_end - group.source_start;
-      appendRenderSegment(segments, {
-        text: targetChars.slice(targetCursor, targetCursor + groupLength).join(""),
-        type: "plain",
-        group_id: group.group_id,
-        op: "equal"
-      });
       targetCursor += groupLength;
       sourceCursor = group.source_end;
     } else {

@@ -22,7 +22,7 @@ describe("buildRenderLines", () => {
       {
         id: "source",
         type: "source",
-        label: "Source",
+        label: "source",
         text: "abc",
         segments: [{ text: "abc", type: "plain" }]
       },
@@ -199,5 +199,67 @@ describe("buildRenderLines", () => {
       group_id: "edit_group_1",
       op: "replace"
     });
+  });
+
+  it("renders unchanged targets with the source-side rule inside edited groups", () => {
+    const source = "abc";
+    const changed: Target = { id: "changed", type: "candidate", text: "aXc" };
+    const unchanged: Target = { id: "unchanged", type: "candidate", text: "abc" };
+    const edits = [
+      editFor(changed, {
+        op: "replace",
+        source_start: 1,
+        source_end: 2,
+        source_text: "b",
+        target_start: 1,
+        target_end: 2,
+        target_text: "X"
+      })
+    ];
+    const groups = groupOverlappingEdits(source, [changed, unchanged], edits);
+
+    const lines = buildRenderLines(source, [changed, unchanged], groups, edits);
+
+    expect(lines.find((line) => line.id === "unchanged")?.segments).toEqual([
+      { text: "a", type: "plain" },
+      {
+        text: "b",
+        type: "replace",
+        group_id: "edit_group_1",
+        op: "equal"
+      },
+      { text: "c", type: "plain" }
+    ]);
+  });
+
+  it("marks unchanged target text as source-side deletion when another target deletes it", () => {
+    const source = "abc";
+    const deleted: Target = { id: "deleted", type: "candidate", text: "ac" };
+    const unchanged: Target = { id: "unchanged", type: "candidate", text: "abc" };
+    const edits = [
+      editFor(deleted, {
+        op: "delete",
+        source_start: 1,
+        source_end: 2,
+        source_text: "b",
+        target_start: 1,
+        target_end: 1,
+        target_text: ""
+      })
+    ];
+    const groups = groupOverlappingEdits(source, [deleted, unchanged], edits);
+
+    const lines = buildRenderLines(source, [deleted, unchanged], groups, edits);
+
+    expect(lines.find((line) => line.id === "unchanged")?.segments).toEqual([
+      { text: "a", type: "plain" },
+      {
+        text: "b",
+        type: "delete",
+        group_id: "edit_group_1",
+        op: "equal"
+      },
+      { text: "c", type: "plain" }
+    ]);
   });
 });

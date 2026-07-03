@@ -1,5 +1,6 @@
-import { Fragment, type KeyboardEvent, type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import type { RenderLine, RenderSegment } from "../types";
+import { DiffToken } from "./DiffToken";
 
 interface HighlightViewProps {
   lines: RenderLine[];
@@ -16,6 +17,7 @@ export function HighlightView({
     <section className="panel result-panel" aria-labelledby="highlight-view-title">
       <div className="panel-header">
         <h2 id="highlight-view-title">多行高亮</h2>
+        <HighlightLegend />
       </div>
 
       <div className="highlight-lines">
@@ -23,11 +25,7 @@ export function HighlightView({
           <div className={`highlight-line line-${line.type}`} key={line.id}>
             <div className="line-label">{line.label}</div>
             <div className="sentence-line">
-              {line.segments.map((segment, index) => (
-                <Fragment key={`${line.id}-${index}`}>
-                  {renderSegment(segment, selectedGroupId, onSelectGroup)}
-                </Fragment>
-              ))}
+              {renderSegmentsWithSlots(line, selectedGroupId, onSelectGroup)}
             </div>
           </div>
         ))}
@@ -36,68 +34,79 @@ export function HighlightView({
   );
 }
 
-function renderSegment(
-  segment: RenderSegment,
+function HighlightLegend() {
+  return (
+    <div className="highlight-legend" aria-label="图例">
+      <span className="legend-label">图例</span>
+      <span className="legend-item">
+        <DiffToken segment={{ text: "替换", type: "replace", op: "replace" }} />
+        <span>替换</span>
+      </span>
+      <span className="legend-item">
+        <DiffToken segment={{ text: "文本", type: "delete", op: "delete" }} lineType="source" />
+        <span>应移除</span>
+      </span>
+      <span className="legend-item">
+        <DiffToken segment={{ text: "文本", type: "delete", op: "delete" }} lineType="candidate" />
+        <span>已缺失</span>
+      </span>
+      <span className="legend-item">
+        <DiffToken segment={{ text: "文本", type: "insert", op: "insert" }} />
+        <span>已新增</span>
+      </span>
+      <span className="legend-item">
+        <DiffToken segment={{ text: "", type: "anchor", op: "anchor" }} />
+        <span>插入位</span>
+      </span>
+    </div>
+  );
+}
+
+function renderSegmentsWithSlots(
+  line: RenderLine,
   selectedGroupId: string | null,
   onSelectGroup: (groupId: string) => void
+): ReactNode[] {
+  let sourceSlot = 0;
+
+  return line.segments.map((segment, index) => {
+    const currentSlot = sourceSlot;
+    sourceSlot += sourceLengthForSegment(segment);
+
+    return (
+      <Fragment key={`${line.id}-${index}`}>
+        {renderSegment(segment, line.type, selectedGroupId, onSelectGroup, currentSlot)}
+      </Fragment>
+    );
+  });
+}
+
+function renderSegment(
+  segment: RenderSegment,
+  lineType: RenderLine["type"],
+  selectedGroupId: string | null,
+  onSelectGroup: (groupId: string) => void,
+  sourceSlot: number
 ): ReactNode {
   if (!segment.group_id && segment.type === "plain") {
     return segment.text;
   }
 
-  const className = [
-    "highlight-span",
-    `segment-${segment.type}`,
-    segment.group_id ? "is-interactive" : "",
-    segment.group_id === selectedGroupId ? "is-selected" : ""
-  ]
-    .filter(Boolean)
-    .join(" ");
-  const interactiveProps = segment.group_id
-    ? {
-        role: "button",
-        tabIndex: 0,
-        title: segment.group_id,
-        onClick: () => onSelectGroup(segment.group_id as string),
-        onKeyDown: (event: KeyboardEvent<HTMLSpanElement>) =>
-          handleSegmentKeyDown(event, segment.group_id as string, onSelectGroup)
-      }
-    : {};
-
-  if (segment.type === "delete") {
-    return (
-      <span className={`${className} delete-mark`} {...interactiveProps}>
-        [<span className="delete-text">{segment.text}</span>]
-      </span>
-    );
-  }
-
-  if (segment.type === "insert" || segment.type === "anchor") {
-    const text = segment.type === "anchor" ? "" : segment.text;
-
-    return (
-      <span className={`${className} insert-mark`} {...interactiveProps}>
-        {`/${text}\\`}
-      </span>
-    );
-  }
-
   return (
-    <span className={className} {...interactiveProps}>
-      {segment.text}
-    </span>
+    <DiffToken
+      segment={segment}
+      lineType={lineType}
+      selectedGroupId={selectedGroupId}
+      onSelectGroup={onSelectGroup}
+      sourceSlot={sourceSlot}
+    />
   );
 }
 
-function handleSegmentKeyDown(
-  event: KeyboardEvent<HTMLSpanElement>,
-  groupId: string,
-  onSelectGroup: (groupId: string) => void
-) {
-  if (event.key !== "Enter" && event.key !== " ") {
-    return;
+function sourceLengthForSegment(segment: RenderSegment): number {
+  if (segment.type === "insert" || segment.type === "anchor") {
+    return 0;
   }
 
-  event.preventDefault();
-  onSelectGroup(groupId);
+  return Array.from(segment.text).length;
 }

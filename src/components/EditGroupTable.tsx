@@ -1,11 +1,13 @@
-import { Fragment, type KeyboardEvent, type ReactNode } from "react";
+import { Fragment, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import type {
   DiffView,
   EditGroup,
   EditGroupItem,
   EditGroupItemSegment,
+  SegmentType,
   Target
 } from "../types";
+import { DiffToken, type DiffTokenSegment } from "./DiffToken";
 
 interface EditGroupTableProps {
   view: DiffView;
@@ -56,7 +58,7 @@ export function EditGroupTable({
                 </th>
                 <td>{renderSourceCell(group)}</td>
                 {view.targets.map((target) => (
-                  <td key={target.id}>{renderItem(group.items[target.id])}</td>
+                  <td key={target.id}>{renderItem(group.items[target.id], group)}</td>
                 ))}
               </tr>
             ))}
@@ -81,40 +83,138 @@ function handleRowKeyDown(
 }
 
 function renderSourceCell(group: EditGroup): ReactNode {
-  if (group.source_text === "") {
-    return <InsertMark text="" />;
-  }
-
-  return <span className="source-fragment">{group.source_text}</span>;
+  return (
+    <AlignedCell sourceSlot={group.source_start}>
+      <DiffToken segment={sourceSegmentForGroup(group)} lineType="source" sourceSlot={group.source_start} />
+    </AlignedCell>
+  );
 }
 
-function renderItem(item: EditGroupItem | undefined): ReactNode {
+function renderItem(item: EditGroupItem | undefined, group: EditGroup): ReactNode {
   if (!item) {
     return <span className="muted-text">-</span>;
+  }
+
+  if (item.op === "equal") {
+    return (
+      <AlignedCell sourceSlot={group.source_start}>
+        <DiffToken
+          segment={sourceSideSegmentForEqualItem(item, group)}
+          lineType="candidate"
+          sourceSlot={group.source_start}
+        />
+      </AlignedCell>
+    );
   }
 
   const segments =
     item.segments.length > 0 ? item.segments : [{ text: item.text, op: item.op }];
 
-  return segments.map((segment, index) => (
-    <Fragment key={`${segment.op}-${index}`}>{renderSegment(segment)}</Fragment>
-  ));
+  return (
+    <AlignedCell sourceSlot={group.source_start}>
+      {segments.map((segment, index) => (
+        <Fragment key={`${segment.op}-${index}`}>
+          {renderSegment(segment, group, index)}
+        </Fragment>
+      ))}
+    </AlignedCell>
+  );
 }
 
-function renderSegment(segment: EditGroupItemSegment): ReactNode {
-  if (segment.op === "delete") {
-    return <DeleteMark text={segment.text} />;
+function renderSegment(
+  segment: EditGroupItemSegment,
+  group: EditGroup,
+  index: number
+): ReactNode {
+  if (segment.op === "equal") {
+    return <span>{segment.text}</span>;
   }
 
-  if (segment.op === "insert" || segment.op === "anchor") {
-    return <InsertMark text={segment.op === "anchor" ? "" : segment.text} />;
+  return (
+    <DiffToken
+      segment={itemSegmentToToken(segment, group)}
+      lineType="candidate"
+      sourceSlot={group.source_start + index}
+    />
+  );
+}
+
+function AlignedCell({
+  sourceSlot,
+  children
+}: {
+  sourceSlot: number;
+  children: ReactNode;
+}) {
+  return (
+    <span
+      className="aligned-cell-content"
+      data-source-slot={sourceSlot}
+      style={{ "--source-slot": sourceSlot } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+function sourceSegmentForGroup(group: EditGroup): DiffTokenSegment {
+  const type = sourceTypeForGroup(group);
+
+  return {
+    text: group.source_text,
+    type,
+    group_id: group.group_id,
+    op: type === "anchor" ? "anchor" : type === "plain" ? "equal" : type
+  };
+}
+
+function sourceSideSegmentForEqualItem(
+  item: EditGroupItem,
+  group: EditGroup
+): DiffTokenSegment {
+  const type = sourceTypeForGroup(group);
+
+  return {
+    text: item.text,
+    type,
+    group_id: group.group_id,
+    op: type === "anchor" ? "anchor" : "equal"
+  };
+}
+
+function itemSegmentToToken(
+  segment: EditGroupItemSegment,
+  group: EditGroup
+): DiffTokenSegment {
+  const type: SegmentType =
+    segment.op === "anchor" ? "anchor" : segment.op === "equal" ? "plain" : segment.op;
+
+  return {
+    text: segment.text,
+    type,
+    group_id: group.group_id,
+    op: segment.op
+  };
+}
+
+function sourceTypeForGroup(group: EditGroup): SegmentType {
+  if (group.source_start === group.source_end) {
+    return "anchor";
   }
 
-  if (segment.op === "replace") {
-    return <span className="highlight-span replace-mark">{segment.text}</span>;
+  const ops = Object.values(group.items).flatMap((item) =>
+    item.segments.length > 0 ? item.segments.map((segment) => segment.op) : [item.op]
+  );
+
+  if (ops.includes("replace")) {
+    return "replace";
   }
 
-  return <span>{segment.text}</span>;
+  if (ops.includes("delete")) {
+    return "delete";
+  }
+
+  return "plain";
 }
 
 function DeleteMark({ text }: { text: string }) {

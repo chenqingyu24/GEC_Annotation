@@ -101,7 +101,7 @@ describe("buildDiffView", () => {
       {
         id: "source",
         type: "source",
-        label: "Source",
+        label: "source",
         text: "abc",
         segments: [{ text: "abc", type: "plain" }]
       },

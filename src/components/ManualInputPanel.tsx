@@ -42,7 +42,7 @@ export function ManualInputPanel({ onSubmit, onClear }: ManualInputPanelProps) {
             id={sourceId}
             value={source}
             onChange={(event) => setSource(event.target.value)}
-            rows={4}
+            rows={1}
             placeholder="输入 source"
           />
         </label>
@@ -131,7 +131,7 @@ function DynamicTextList({
                   id={inputId}
                   value={value}
                   onChange={(event) => updateValue(index, event.target.value)}
-                  rows={3}
+                  rows={1}
                   placeholder={`${itemName}_${index + 1}`}
                 />
                 <button
