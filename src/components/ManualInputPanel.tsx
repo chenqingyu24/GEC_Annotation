@@ -106,13 +106,23 @@ function DynamicTextList({
     <div className="field-group">
       <div className="field-group-header">
         <span className="field-label">{title}</span>
-        <button
-          className="icon-text-button"
-          type="button"
-          onClick={() => onChange([...values, ""])}
-        >
-          添加
-        </button>
+        <div className="field-group-actions">
+          <button
+            className="icon-text-button"
+            type="button"
+            onClick={() => onChange([...values, ""])}
+          >
+            添加
+          </button>
+          <button
+            className="secondary-button compact-button"
+            type="button"
+            onClick={() => removeValue(values.length - 1)}
+            disabled={!canRemove || values.length === 0}
+          >
+            删除
+          </button>
+        </div>
       </div>
 
       {values.length === 0 ? (
@@ -134,14 +144,6 @@ function DynamicTextList({
                   rows={1}
                   placeholder={`${itemName}_${index + 1}`}
                 />
-                <button
-                  className="secondary-button compact-button"
-                  type="button"
-                  onClick={() => removeValue(index)}
-                  disabled={!canRemove}
-                >
-                  删除
-                </button>
               </div>
             );
           })}

@@ -160,11 +160,15 @@ button:focus-visible,
 }
 
 .field-group-header {
-  justify-content: space-between;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.field-group-header .icon-text-button {
-  transform: translateY(3px);
+.field-group-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .dynamic-list {
@@ -173,10 +177,7 @@ button:focus-visible,
 }
 
 .dynamic-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: center;
+  display: block;
 }
 
 .primary-button,
