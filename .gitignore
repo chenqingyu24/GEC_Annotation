@@ -1,9 +1,37 @@
+# Dependencies
 node_modules/
-dist/
 .pnpm-store/
+
+# Build output
+dist/
+out-tsc/
+tmp/
+coverage/
+e2e/test-output/
+
+# Local/generated agent and git metadata
 .agents/
 .git-local/
 docs/superpowers/plans/
+
+# TypeScript/Vite generated files
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+
+# Environment files
+.env
+
+# Framework/cache output
+.angular/
+.angular-cli.json
+.ng/
+
+# Lockfiles from package managers not used by this repo
+package-lock.json
+yarn.lock
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
