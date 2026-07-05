@@ -1,0 +1,5 @@
+name: gec_tag_backend
+channels:
+  - defaults
+dependencies:
+  - python=3.10

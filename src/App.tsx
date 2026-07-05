@@ -7,6 +7,7 @@ import {
   ManualInputPanel,
   type ManualInputPayload
 } from "./components/ManualInputPanel";
+import { ModelAnalysisPanel } from "./components/ModelAnalysisPanel";
 import { SampleNavigator } from "./components/SampleNavigator";
 import type { DiffView, Sample } from "./types";
 import { buildDiffView } from "./utils/buildDiffView";
@@ -111,8 +112,11 @@ export default function App() {
           </div>
 
           {samples.length === 0 ? (
-            <div className="panel empty-result">
-              No sample loaded. Enter text or upload JSON to preview the alignment.
+            <div className="result-stack">
+              <div className="panel empty-result">
+                No sample loaded. Enter text or upload JSON to preview the alignment.
+              </div>
+              <ModelAnalysisPanel />
             </div>
           ) : currentResult.view ? (
             <ResultContent
@@ -120,7 +124,11 @@ export default function App() {
               selectedGroupId={selectedGroupId}
               onSelectGroup={setSelectedGroupId}
             />
-          ) : null}
+          ) : (
+            <div className="result-stack">
+              <ModelAnalysisPanel />
+            </div>
+          )}
         </section>
       </div>
     </main>
@@ -139,6 +147,7 @@ export function ResultContent({
   onSelectGroup
 }: ResultContentProps) {
   const hasEditGroups = view.edit_groups.length > 0;
+  const [highlightEnabled, setHighlightEnabled] = useState(true);
 
   return (
     <div className="result-stack">
@@ -146,7 +155,10 @@ export function ResultContent({
         lines={view.render_lines}
         selectedGroupId={selectedGroupId}
         onSelectGroup={onSelectGroup}
+        highlightEnabled={highlightEnabled}
+        onToggleHighlight={() => setHighlightEnabled((enabled) => !enabled)}
       />
+      <ModelAnalysisPanel />
       {hasEditGroups ? (
         <EditGroupTable
           view={view}

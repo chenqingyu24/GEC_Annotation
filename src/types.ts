@@ -73,3 +73,28 @@ export interface DiffView {
   edit_groups: EditGroup[];
   render_lines: RenderLine[];
 }
+
+export interface ModelConfig {
+  baseUrl: string;
+  apiKey: string;
+  selectedModel: string;
+  models: ModelOption[];
+}
+
+export interface ModelOption {
+  id: string;
+  label: string;
+  provider: string;
+  requires_api_key: boolean;
+}
+
+export interface GrammarCheckRequest {
+  text: string;
+  model: string;
+}
+
+export interface GrammarCheckResult {
+  has_error: boolean;
+  corrected_text?: string;
+  explanation?: string;
+}
