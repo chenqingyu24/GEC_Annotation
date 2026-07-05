@@ -6,18 +6,32 @@ interface HighlightViewProps {
   lines: RenderLine[];
   selectedGroupId: string | null;
   onSelectGroup: (groupId: string) => void;
+  highlightEnabled: boolean;
+  onToggleHighlight: () => void;
 }
 
 export function HighlightView({
   lines,
   selectedGroupId,
-  onSelectGroup
+  onSelectGroup,
+  highlightEnabled,
+  onToggleHighlight
 }: HighlightViewProps) {
   return (
     <section className="panel result-panel" aria-labelledby="highlight-view-title">
       <div className="panel-header">
         <h2 id="highlight-view-title">多行高亮</h2>
-        <HighlightLegend />
+        <div className="panel-header-actions">
+          {highlightEnabled ? <HighlightLegend /> : null}
+          <button
+            className="secondary-button compact-button"
+            type="button"
+            aria-pressed={highlightEnabled}
+            onClick={onToggleHighlight}
+          >
+            {highlightEnabled ? "隐藏高亮" : "显示高亮"}
+          </button>
+        </div>
       </div>
 
       <div className="highlight-lines">
@@ -25,7 +39,9 @@ export function HighlightView({
           <div className={`highlight-line line-${line.type}`} key={line.id}>
             <div className="line-label">{line.label}</div>
             <div className="sentence-line">
-              {renderSegmentsWithSlots(line, selectedGroupId, onSelectGroup)}
+              {highlightEnabled
+                ? renderSegmentsWithSlots(line, selectedGroupId, onSelectGroup)
+                : line.text}
             </div>
           </div>
         ))}

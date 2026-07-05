@@ -1,4 +1,12 @@
-import { type FormEvent, useId, useState } from "react";
+import {
+  type ChangeEvent,
+  type FormEvent,
+  type TextareaHTMLAttributes,
+  useEffect,
+  useId,
+  useRef,
+  useState
+} from "react";
 
 export interface ManualInputPayload {
   source: string;
@@ -9,6 +17,40 @@ export interface ManualInputPayload {
 interface ManualInputPanelProps {
   onSubmit: (input: ManualInputPayload) => void;
   onClear: () => void;
+}
+
+export const AUTO_RESIZE_MAX_ROWS = 5;
+
+interface AutoResizeTextareaElement {
+  scrollHeight: number;
+  style: {
+    height: string;
+    overflowY: string;
+  };
+}
+
+interface ResizeAutoTextareaOptions {
+  maxRows?: number;
+  lineHeightPx?: number;
+  paddingBlockPx?: number;
+  minHeightPx?: number;
+}
+
+export function resizeAutoTextarea(
+  textarea: AutoResizeTextareaElement,
+  {
+    maxRows = AUTO_RESIZE_MAX_ROWS,
+    lineHeightPx = 24,
+    paddingBlockPx = 20,
+    minHeightPx = 44
+  }: ResizeAutoTextareaOptions = {}
+) {
+  const maxHeight = lineHeightPx * maxRows + paddingBlockPx;
+  textarea.style.height = "auto";
+
+  const nextHeight = Math.max(minHeightPx, Math.min(textarea.scrollHeight, maxHeight));
+  textarea.style.height = `${nextHeight}px`;
+  textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
 }
 
 export function ManualInputPanel({ onSubmit, onClear }: ManualInputPanelProps) {
@@ -38,11 +80,10 @@ export function ManualInputPanel({ onSubmit, onClear }: ManualInputPanelProps) {
       <form className="stack" onSubmit={handleSubmit}>
         <label className="field" htmlFor={sourceId}>
           <span className="field-label">原句</span>
-          <textarea
+          <AutoResizeTextarea
             id={sourceId}
             value={source}
-            onChange={(event) => setSource(event.target.value)}
-            rows={1}
+            onValueChange={setSource}
             placeholder="输入 source"
           />
         </label>
@@ -106,13 +147,23 @@ function DynamicTextList({
     <div className="field-group">
       <div className="field-group-header">
         <span className="field-label">{title}</span>
-        <button
-          className="icon-text-button"
-          type="button"
-          onClick={() => onChange([...values, ""])}
-        >
-          添加
-        </button>
+        <div className="field-group-actions">
+          <button
+            className="icon-text-button"
+            type="button"
+            onClick={() => onChange([...values, ""])}
+          >
+            添加
+          </button>
+          <button
+            className="secondary-button compact-button"
+            type="button"
+            onClick={() => removeValue(values.length - 1)}
+            disabled={!canRemove || values.length === 0}
+          >
+            删除
+          </button>
+        </div>
       </div>
 
       {values.length === 0 ? (
@@ -127,26 +178,52 @@ function DynamicTextList({
                 <label className="sr-only" htmlFor={inputId}>
                   {title} {index + 1}
                 </label>
-                <textarea
+                <AutoResizeTextarea
                   id={inputId}
                   value={value}
-                  onChange={(event) => updateValue(index, event.target.value)}
-                  rows={1}
+                  onValueChange={(nextValue) => updateValue(index, nextValue)}
                   placeholder={`${itemName}_${index + 1}`}
                 />
-                <button
-                  className="secondary-button compact-button"
-                  type="button"
-                  onClick={() => removeValue(index)}
-                  disabled={!canRemove}
-                >
-                  删除
-                </button>
               </div>
             );
           })}
         </div>
       )}
     </div>
+  );
+}
+
+interface AutoResizeTextareaProps
+  extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "className" | "onChange" | "rows"> {
+  onValueChange: (value: string) => void;
+}
+
+function AutoResizeTextarea({
+  onValueChange,
+  value,
+  ...props
+}: AutoResizeTextareaProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      resizeAutoTextarea(textareaRef.current);
+    }
+  }, [value]);
+
+  const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    onValueChange(event.currentTarget.value);
+    resizeAutoTextarea(event.currentTarget);
+  };
+
+  return (
+    <textarea
+      {...props}
+      ref={textareaRef}
+      className="auto-resize-textarea"
+      value={value}
+      onChange={handleChange}
+      rows={1}
+    />
   );
 }

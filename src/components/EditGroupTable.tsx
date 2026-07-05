@@ -1,4 +1,4 @@
-import { Fragment, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { Fragment, type KeyboardEvent, type ReactNode } from "react";
 import type {
   DiffView,
   EditGroup,
@@ -150,7 +150,6 @@ function AlignedCell({
     <span
       className="aligned-cell-content"
       data-source-slot={sourceSlot}
-      style={{ "--source-slot": sourceSlot } as CSSProperties}
     >
       {children}
     </span>

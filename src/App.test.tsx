@@ -1,9 +1,17 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { ResultContent } from "./App";
+import App, { ResultContent } from "./App";
 import type { DiffView } from "./types";
 
 describe("ResultContent", () => {
+  it("shows the model analysis panel even when no sample is loaded", () => {
+    const html = renderToStaticMarkup(<App />);
+
+    expect(html).toContain("No sample loaded");
+    expect(html).toContain('aria-labelledby="model-analysis-title"');
+    expect(html).toContain("待分析文本");
+  });
+
   it("shows plain rendered lines with a no-change note when a sample has no edit groups", () => {
     const view: DiffView = {
       id: "sample_plain",
@@ -162,6 +170,9 @@ describe("ResultContent", () => {
     );
 
     expect(html.indexOf('aria-labelledby="highlight-view-title"')).toBeLessThan(
+      html.indexOf('aria-labelledby="model-analysis-title"')
+    );
+    expect(html.indexOf('aria-labelledby="model-analysis-title"')).toBeLessThan(
       html.indexOf('aria-labelledby="edit-group-title"')
     );
   });

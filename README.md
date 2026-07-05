@@ -30,6 +30,36 @@ npm run dev
 
 Vite 会在终端输出本地访问地址，通常是 `http://localhost:5173/`。
 
+## 启动本地模型后端
+
+仓库包含一个无第三方依赖的本地模型代理后端，用于先跑通“模型分析”面板。它提供 `GET /models` 和 `POST /grammar-check`，默认包含本地演示模型 `rule-based-demo`，并可代理 DeepSeek 的 OpenAI-compatible Chat API。
+
+如果已创建 conda 环境，可以直接运行：
+
+```bat
+backend\start_backend_conda.bat
+```
+
+首次创建环境：
+
+```bash
+D:\Anaconda\Scripts\conda.exe env create -f backend\environment.yml
+```
+
+也可以手动用 Python 启动：
+
+```bash
+python backend/server.py --host 127.0.0.1 --port 8003
+```
+
+如果使用 Codex bundled Python：
+
+```bash
+C:\Users\XY\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe backend/server.py --host 127.0.0.1 --port 8003
+```
+
+前端默认连接 `http://127.0.0.1:8003`，页面不会暴露服务地址输入框。如需改后端地址，可在启动 Vite 前设置 `VITE_MODEL_API_BASE_URL`。真实本地 GEC 模型接入时，可以替换 `backend/server.py` 中的 `check_grammar` 函数；真实 DeepSeek 调用需要在页面填写 API Key。
+
 ## 测试
 
 ```bash
@@ -45,6 +75,29 @@ npm run build
 ```
 
 该命令会先运行 TypeScript 项目构建，再执行 Vite 生产构建。
+
+## 后端托管前端
+
+如需只启动一个服务使用完整工具，先构建前端：
+
+```bash
+pnpm build
+```
+
+然后启动后端：
+
+```bash
+python backend/server.py --host 127.0.0.1 --port 8003
+```
+
+浏览器访问：
+
+```text
+http://localhost:8003/
+```
+
+此模式下，后端会同时提供前端静态文件和模型接口：`GET /`、`GET /assets/...`、`GET /models`、`POST /grammar-check`。
+页面与接口同源，适合本地模型服务的日常使用。
 
 ## 手动输入使用
 
@@ -105,6 +158,80 @@ npm run build
 
 上传多样本 JSON 后，页面会显示样本导航。可以使用上一条、下一条按钮，或下拉框选择样本。应用只对当前选中的样本构建并展示对齐结果，切换样本时会重置当前选中的编辑组。
 
+## 模型分析接口
+
+结果区包含“模型分析”面板，即使未加载样本也会显示。面板可接入大模型 API、本地中文语法纠错模型或本地中文语法检测模型。使用时可填写大模型 API Key，点击“刷新模型”获取模型列表，然后输入待分析文本，或在页面中拖选文本后点击“大模型分析”。如果同时存在页面选中文本和面板文本框内容，优先分析页面选中文本。API Key 只保存在当前页面会话中，刷新页面后会清空。
+
+前端默认通过本地模型代理后端访问模型服务。后端提供以下接口。
+
+模型列表：
+
+```http
+GET /models
+Authorization: Bearer <api-key>
+```
+
+响应可以是通用格式：
+
+```json
+{
+  "models": [
+    {
+      "id": "rule-based-demo",
+      "label": "本地规则演示",
+      "provider": "local",
+      "requires_api_key": false
+    },
+    {
+      "id": "deepseek-v4-flash",
+      "label": "DeepSeek V4 Flash",
+      "provider": "deepseek",
+      "requires_api_key": true
+    }
+  ]
+}
+```
+
+前端也兼容旧字符串数组和 OpenAI-compatible 格式：
+
+```json
+{
+  "data": [
+    { "id": "gec-model-a" },
+    { "id": "gec-model-b" }
+  ]
+}
+```
+
+语法分析：
+
+```http
+POST /grammar-check
+Content-Type: application/json
+Authorization: Bearer <api-key>
+```
+
+请求：
+
+```json
+{
+  "text": "我昨天去学校。",
+  "model": "gec-model-a"
+}
+```
+
+响应必须是 JSON，并包含 `has_error`：
+
+```json
+{
+  "has_error": true,
+  "corrected_text": "我昨天去了学校。",
+  "explanation": "句子缺少动态助词“了”。"
+}
+```
+
+模型返回的纠正句只会展示在页面中，不会自动修改当前样本、候选句或 JSON 预览。
+
 ## 主要限制说明
 
 - 对齐算法是字符级 LCS diff，不进行分词、语义判断或模型推理。
@@ -113,4 +240,4 @@ npm run build
 - JSON 文件超过 10MB 时会显示性能警告，但仍会尝试读取和解析。
 - 多样本 JSON 的建议样本数不超过 3000 条；超过时会显示性能提示，但不会强制阻止上传。
 - 手动输入会过滤 trim 后为空的参考答案和候选句；JSON 输入会保留候选文本原文，仅忽略 references 中的精确空字符串。
-- 当前应用在浏览器端运行，不包含后端存储、用户登录、文件导出或远程模型调用。
+- 当前应用在浏览器端运行，不包含后端存储、用户登录或文件导出；模型分析依赖用户提供的外部或本地 HTTP 服务。

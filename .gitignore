@@ -26,6 +26,8 @@ vite.config.d.ts
 .angular/
 .angular-cli.json
 .ng/
+__pycache__/
+*.py[cod]
 
 # Lockfiles from package managers not used by this repo
 package-lock.json
