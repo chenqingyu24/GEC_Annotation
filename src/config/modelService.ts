@@ -5,6 +5,7 @@ interface ModelApiBaseUrlOptions {
 }
 
 const LOCAL_BACKEND_API_BASE_URL = "http://127.0.0.1:8003";
+export const BROWSER_DEMO_API_BASE_URL = "browser://local-demo";
 
 export const DEFAULT_MODEL_API_BASE_URL = resolveDefaultModelApiBaseUrl();
 
@@ -19,8 +20,12 @@ export function resolveDefaultModelApiBaseUrl({
     return trimmedConfiguredBaseUrl;
   }
 
-  if (!isDev && location && isLocalHostname(location.hostname)) {
-    return location.origin;
+  if (!isDev && location) {
+    if (isLocalHostname(location.hostname)) {
+      return location.origin;
+    }
+
+    return BROWSER_DEMO_API_BASE_URL;
   }
 
   return LOCAL_BACKEND_API_BASE_URL;

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { BROWSER_DEMO_API_BASE_URL } from "../config/modelService";
 import { checkGrammar, fetchModelList } from "./modelApi";
 
 describe("modelApi", () => {
@@ -96,6 +97,33 @@ describe("modelApi", () => {
     await expect(fetchModelList({ baseUrl: "http://localhost:8000", apiKey: "" })).rejects.toThrow(
       "无法连接模型服务"
     );
+  });
+
+  it("returns the browser demo model list without a network request", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchModelList({ baseUrl: BROWSER_DEMO_API_BASE_URL, apiKey: "" })).resolves.toEqual([
+      { id: "rule-based-demo", label: "本地规则演示", provider: "local", requires_api_key: false }
+    ]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("checks grammar with the browser demo model without a network request", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      checkGrammar(
+        { baseUrl: BROWSER_DEMO_API_BASE_URL, apiKey: "" },
+        { text: "我昨天去学校。", model: "rule-based-demo" }
+      )
+    ).resolves.toEqual({
+      has_error: true,
+      corrected_text: "我昨天去了学校。",
+      explanation: expect.stringContaining("了")
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

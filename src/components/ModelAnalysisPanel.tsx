@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { GrammarCheckResult, ModelConfig, ModelOption } from "../types";
 import { checkGrammar, fetchModelList } from "../services/modelApi";
-import { DEFAULT_MODEL_API_BASE_URL } from "../config/modelService";
+import { BROWSER_DEMO_API_BASE_URL, DEFAULT_MODEL_API_BASE_URL } from "../config/modelService";
 
 interface ModelAnalysisPanelProps {
   initialInputText?: string;
@@ -30,16 +30,20 @@ const DEFAULT_MODEL_OPTIONS: ModelOption[] = [
   }
 ];
 
+const BROWSER_DEMO_MODEL_OPTIONS = DEFAULT_MODEL_OPTIONS.filter((model) => model.id === "rule-based-demo");
+
 export function ModelAnalysisPanel({
   initialInputText = "",
   initialSelectedText = "",
   initialResult = null
 }: ModelAnalysisPanelProps) {
+  const initialModelOptions =
+    DEFAULT_MODEL_API_BASE_URL === BROWSER_DEMO_API_BASE_URL ? BROWSER_DEMO_MODEL_OPTIONS : DEFAULT_MODEL_OPTIONS;
   const [config, setConfig] = useState<ModelConfig>({
     baseUrl: DEFAULT_MODEL_API_BASE_URL,
     apiKey: "",
-    selectedModel: DEFAULT_MODEL_OPTIONS[0]?.id ?? "",
-    models: DEFAULT_MODEL_OPTIONS
+    selectedModel: initialModelOptions[0]?.id ?? "",
+    models: initialModelOptions
   });
   const [inputText, setInputText] = useState(initialInputText);
   const [selectedText, setSelectedText] = useState(initialSelectedText);

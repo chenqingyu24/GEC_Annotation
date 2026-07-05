@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_MODEL_API_BASE_URL, resolveDefaultModelApiBaseUrl } from "./modelService";
+import {
+  BROWSER_DEMO_API_BASE_URL,
+  DEFAULT_MODEL_API_BASE_URL,
+  resolveDefaultModelApiBaseUrl
+} from "./modelService";
 
 describe("model service config", () => {
   it("uses the alternate local backend port by default", () => {
@@ -30,6 +34,19 @@ describe("model service config", () => {
         }
       })
     ).toBe("http://127.0.0.1:8003");
+  });
+
+  it("uses the browser demo API when production is served from GitHub Pages", () => {
+    expect(
+      resolveDefaultModelApiBaseUrl({
+        configuredBaseUrl: "",
+        isDev: false,
+        location: {
+          hostname: "chenqingyu24.github.io",
+          origin: "https://chenqingyu24.github.io"
+        }
+      })
+    ).toBe(BROWSER_DEMO_API_BASE_URL);
   });
 
   it("lets explicit model API configuration override runtime detection", () => {

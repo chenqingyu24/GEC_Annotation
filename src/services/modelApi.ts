@@ -1,8 +1,23 @@
 import type { GrammarCheckRequest, GrammarCheckResult, ModelConfig, ModelOption } from "../types";
+import { BROWSER_DEMO_API_BASE_URL } from "../config/modelService";
 
 type ModelConnection = Pick<ModelConfig, "baseUrl" | "apiKey">;
 
+const BROWSER_DEMO_MODEL_ID = "rule-based-demo";
+const BROWSER_DEMO_MODELS: ModelOption[] = [
+  {
+    id: BROWSER_DEMO_MODEL_ID,
+    label: "本地规则演示",
+    provider: "local",
+    requires_api_key: false
+  }
+];
+
 export async function fetchModelList(config: ModelConnection): Promise<ModelOption[]> {
+  if (isBrowserDemoApiBaseUrl(config.baseUrl)) {
+    return BROWSER_DEMO_MODELS;
+  }
+
   const response = await requestModelService(`${normalizeBaseUrl(config.baseUrl)}/models`, {
     method: "GET",
     headers: buildHeaders(config.apiKey)
@@ -28,6 +43,10 @@ export async function checkGrammar(
     throw new Error("请先选择模型。");
   }
 
+  if (isBrowserDemoApiBaseUrl(config.baseUrl)) {
+    return checkGrammarWithBrowserDemo(request);
+  }
+
   const response = await requestModelService(`${normalizeBaseUrl(config.baseUrl)}/grammar-check`, {
     method: "POST",
     headers: {
@@ -43,6 +62,31 @@ export async function checkGrammar(
   }
 
   return parseGrammarCheckResult(data);
+}
+
+function isBrowserDemoApiBaseUrl(baseUrl: string): boolean {
+  return baseUrl.trim() === BROWSER_DEMO_API_BASE_URL;
+}
+
+function checkGrammarWithBrowserDemo(request: GrammarCheckRequest): GrammarCheckResult {
+  if (request.model !== BROWSER_DEMO_MODEL_ID) {
+    throw new Error("浏览器演示模式仅支持本地规则演示模型。");
+  }
+
+  const text = request.text.trim();
+
+  if (text === "我昨天去学校。") {
+    return {
+      has_error: true,
+      corrected_text: "我昨天去了学校。",
+      explanation: "句子缺少助词“了”。"
+    };
+  }
+
+  return {
+    has_error: false,
+    explanation: "浏览器内置规则演示未检测到明显语法错误。真实模型请启动本地后端或配置可访问的模型服务。"
+  };
 }
 
 function normalizeBaseUrl(baseUrl: string): string {
