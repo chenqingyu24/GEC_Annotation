@@ -49,16 +49,16 @@ D:\Anaconda\Scripts\conda.exe env create -f backend\environment.yml
 也可以手动用 Python 启动：
 
 ```bash
-python backend/server.py --host 127.0.0.1 --port 8001
+python backend/server.py --host 127.0.0.1 --port 8003
 ```
 
 如果使用 Codex bundled Python：
 
 ```bash
-C:\Users\XY\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe backend/server.py --host 127.0.0.1 --port 8001
+C:\Users\XY\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe backend/server.py --host 127.0.0.1 --port 8003
 ```
 
-前端默认连接 `http://127.0.0.1:8001`，页面不会暴露服务地址输入框。如需改后端地址，可在启动 Vite 前设置 `VITE_MODEL_API_BASE_URL`。真实本地 GEC 模型接入时，可以替换 `backend/server.py` 中的 `check_grammar` 函数；真实 DeepSeek 调用需要在页面填写 API Key。
+前端默认连接 `http://127.0.0.1:8003`，页面不会暴露服务地址输入框。如需改后端地址，可在启动 Vite 前设置 `VITE_MODEL_API_BASE_URL`。真实本地 GEC 模型接入时，可以替换 `backend/server.py` 中的 `check_grammar` 函数；真实 DeepSeek 调用需要在页面填写 API Key。
 
 ## 测试
 

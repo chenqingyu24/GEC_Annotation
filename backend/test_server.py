@@ -5,7 +5,7 @@ from http.client import HTTPConnection
 from http.server import ThreadingHTTPServer
 from unittest.mock import patch
 
-from server import ModelApiHandler
+from server import DEFAULT_PORT, ModelApiHandler
 
 
 class BackendServerTest(unittest.TestCase):
@@ -19,6 +19,9 @@ class BackendServerTest(unittest.TestCase):
         self.server.shutdown()
         self.server.server_close()
         self.thread.join(timeout=2)
+
+    def test_default_port_uses_alternate_local_backend_port(self) -> None:
+        self.assertEqual(DEFAULT_PORT, 8003)
 
     def test_models_endpoint_returns_model_descriptions_and_cors_headers(self) -> None:
         response, body = self.request("GET", "/models")
@@ -123,6 +126,7 @@ class BackendServerTest(unittest.TestCase):
             headers={
                 "Origin": "http://localhost:5173",
                 "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Private-Network": "true",
             },
         )
 
@@ -133,6 +137,7 @@ class BackendServerTest(unittest.TestCase):
         self.assertEqual(response.status, 204)
         self.assertEqual(response.getheader("Access-Control-Allow-Origin"), "*")
         self.assertIn("POST", response.getheader("Access-Control-Allow-Methods"))
+        self.assertEqual(response.getheader("Access-Control-Allow-Private-Network"), "true")
 
     def request(self, method: str, path: str, payload: dict | None = None, headers: dict | None = None):
         connection = HTTPConnection("127.0.0.1", self.port, timeout=5)

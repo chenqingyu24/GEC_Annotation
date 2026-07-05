@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 RULE_MODEL_ID = "rule-based-demo"
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
+DEFAULT_PORT = 8003
 MODEL_OPTIONS = [
     {
         "id": RULE_MODEL_ID,
@@ -126,6 +127,7 @@ class ModelApiHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        self.send_header("Access-Control-Allow-Private-Network", "true")
 
     def read_bearer_token(self) -> str:
         authorization = self.headers.get("Authorization", "")
@@ -263,7 +265,7 @@ def parse_grammar_result(data: Any) -> Dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Local grammar-check model API demo server")
     parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", default=8001, type=int)
+    parser.add_argument("--port", default=DEFAULT_PORT, type=int)
     args = parser.parse_args()
 
     server = ThreadingHTTPServer((args.host, args.port), ModelApiHandler)

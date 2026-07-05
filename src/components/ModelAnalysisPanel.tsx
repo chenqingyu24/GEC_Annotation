@@ -1,15 +1,13 @@
 import { useState } from "react";
 import type { GrammarCheckResult, ModelConfig, ModelOption } from "../types";
 import { checkGrammar, fetchModelList } from "../services/modelApi";
+import { DEFAULT_MODEL_API_BASE_URL } from "../config/modelService";
 
 interface ModelAnalysisPanelProps {
   initialInputText?: string;
   initialSelectedText?: string;
   initialResult?: GrammarCheckResult | null;
 }
-
-const DEFAULT_MODEL_API_BASE_URL =
-  import.meta.env.VITE_MODEL_API_BASE_URL?.trim() || "http://127.0.0.1:8001";
 
 const DEFAULT_MODEL_OPTIONS: ModelOption[] = [
   {

@@ -6,7 +6,7 @@ if not exist "%PYTHON_EXE%" (
   exit /b 1
 )
 pushd "%~dp0.."
-"%PYTHON_EXE%" backend\server.py --host 127.0.0.1 --port 8001
+"%PYTHON_EXE%" backend\server.py --host 127.0.0.1 --port 8003
 set "EXIT_CODE=%ERRORLEVEL%"
 popd
 exit /b %EXIT_CODE%
