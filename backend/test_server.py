@@ -1,8 +1,10 @@
 import json
+import tempfile
 import threading
 import unittest
 from http.client import HTTPConnection
 from http.server import ThreadingHTTPServer
+from pathlib import Path
 from unittest.mock import patch
 
 from server import DEFAULT_PORT, ModelApiHandler
@@ -53,6 +55,35 @@ class BackendServerTest(unittest.TestCase):
                 ]
             },
         )
+
+    def test_root_serves_frontend_index_from_dist(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            dist_dir = Path(temp_dir)
+            (dist_dir / "index.html").write_text(
+                '<!doctype html><div id="root"></div><script src="/assets/app.js"></script>',
+                encoding="utf-8",
+            )
+
+            with patch("server.FRONTEND_DIST_DIR", dist_dir, create=True):
+                response, body = self.request("GET", "/")
+
+        self.assertEqual(response.status, 200)
+        self.assertIn("text/html", response.getheader("Content-Type"))
+        self.assertIn('<div id="root"></div>', body)
+
+    def test_static_assets_are_served_from_dist(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            dist_dir = Path(temp_dir)
+            assets_dir = dist_dir / "assets"
+            assets_dir.mkdir()
+            (assets_dir / "app.js").write_text("console.log('ok');", encoding="utf-8")
+
+            with patch("server.FRONTEND_DIST_DIR", dist_dir, create=True):
+                response, body = self.request("GET", "/assets/app.js")
+
+        self.assertEqual(response.status, 200)
+        self.assertIn("javascript", response.getheader("Content-Type"))
+        self.assertEqual(body, "console.log('ok');")
 
     def test_grammar_check_returns_strict_json_result(self) -> None:
         response, body = self.request(

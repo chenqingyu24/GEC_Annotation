@@ -1,8 +1,11 @@
 import argparse
 import json
+import mimetypes
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 from socketserver import ThreadingMixIn
+from urllib.parse import unquote
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from typing import Any, Dict, Optional
@@ -11,6 +14,7 @@ from typing import Any, Dict, Optional
 RULE_MODEL_ID = "rule-based-demo"
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 DEFAULT_PORT = 8003
+FRONTEND_DIST_DIR = Path(__file__).resolve().parent.parent / "dist"
 MODEL_OPTIONS = [
     {
         "id": RULE_MODEL_ID,
@@ -52,11 +56,16 @@ class ModelApiHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self) -> None:
-        if self.path_without_query() != "/models":
-            self.send_json({"detail": "Not Found"}, status=404)
+        path = self.path_without_query()
+
+        if path == "/models":
+            self.send_json({"models": MODEL_OPTIONS})
             return
 
-        self.send_json({"models": MODEL_OPTIONS})
+        if self.send_frontend_file(path):
+            return
+
+        self.send_json({"detail": "Not Found"}, status=404)
 
     def do_POST(self) -> None:
         if self.path_without_query() != "/grammar-check":
@@ -103,6 +112,41 @@ class ModelApiHandler(BaseHTTPRequestHandler):
 
     def path_without_query(self) -> str:
         return self.path.split("?", 1)[0]
+
+    def send_frontend_file(self, request_path: str) -> bool:
+        static_path = self.resolve_frontend_path(request_path)
+
+        if static_path is None or not static_path.is_file():
+            return False
+
+        try:
+            body = static_path.read_bytes()
+        except OSError:
+            return False
+
+        content_type = mimetypes.guess_type(static_path.name)[0] or "application/octet-stream"
+        self.send_response(200)
+        self.send_cors_headers()
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+        return True
+
+    def resolve_frontend_path(self, request_path: str) -> Optional[Path]:
+        if request_path == "/":
+            candidate = FRONTEND_DIST_DIR / "index.html"
+        else:
+            relative_path = unquote(request_path).lstrip("/")
+            candidate = FRONTEND_DIST_DIR / relative_path
+
+        resolved_dist_dir = FRONTEND_DIST_DIR.resolve()
+        resolved_candidate = candidate.resolve()
+
+        if not resolved_candidate.is_relative_to(resolved_dist_dir):
+            return None
+
+        return resolved_candidate
 
     def read_json(self) -> Dict[str, Any]:
         content_length = int(self.headers.get("Content-Length", "0"))

@@ -76,6 +76,29 @@ npm run build
 
 该命令会先运行 TypeScript 项目构建，再执行 Vite 生产构建。
 
+## 后端托管前端
+
+如需只启动一个服务使用完整工具，先构建前端：
+
+```bash
+pnpm build
+```
+
+然后启动后端：
+
+```bash
+python backend/server.py --host 127.0.0.1 --port 8003
+```
+
+浏览器访问：
+
+```text
+http://localhost:8003/
+```
+
+此模式下，后端会同时提供前端静态文件和模型接口：`GET /`、`GET /assets/...`、`GET /models`、`POST /grammar-check`。
+页面与接口同源，适合本地模型服务的日常使用。
+
 ## 手动输入使用
 
 1. 在“手动输入”区域填写原句 `source`。
