@@ -45,6 +45,8 @@ describe("HighlightView", () => {
     expect(html).toContain("replace-mark");
     expect(html).toContain('data-source-slot="1"');
     expect(html).toContain("图例");
+    expect(html).toContain("已移除");
+    expect(html).not.toContain("已缺失");
   });
 
   it("renders plain text and the show button when highlighting is disabled", () => {

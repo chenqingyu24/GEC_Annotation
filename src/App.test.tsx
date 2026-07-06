@@ -4,10 +4,19 @@ import App, { ResultContent } from "./App";
 import type { DiffView } from "./types";
 
 describe("ResultContent", () => {
+  it("shows concise onboarding guidance for first-time users", () => {
+    const html = renderToStaticMarkup(<App />);
+
+    expect(html).toContain("快速开始");
+    expect(html).toContain("填写原句 source、候选句 candidate");
+    expect(html).toContain("点击高亮片段或编辑组行");
+  });
+
   it("shows the model analysis panel even when no sample is loaded", () => {
     const html = renderToStaticMarkup(<App />);
 
-    expect(html).toContain("No sample loaded");
+    expect(html).toContain("还没有样本。请在左侧手动填写 source/candidate");
+    expect(html).not.toContain("No sample loaded");
     expect(html).toContain('aria-labelledby="model-analysis-title"');
     expect(html).toContain("待分析文本");
   });

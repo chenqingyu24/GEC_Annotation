@@ -64,7 +64,7 @@ function HighlightLegend() {
       </span>
       <span className="legend-item">
         <DiffToken segment={{ text: "文本", type: "delete", op: "delete" }} lineType="candidate" />
-        <span>已缺失</span>
+        <span>已移除</span>
       </span>
       <span className="legend-item">
         <DiffToken segment={{ text: "文本", type: "insert", op: "insert" }} />

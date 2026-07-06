@@ -80,7 +80,18 @@ export default function App() {
   return (
     <main className="app-shell">
       <header className="app-header">
-        <h1>中文语法纠错多候选对齐工具</h1>
+        <div className="app-title-block">
+          <h1>中文语法纠错多候选对齐工具</h1>
+          <p className="app-subtitle">对齐原句、参考答案和多个候选句，快速检查同一位置的改动。</p>
+        </div>
+        <div className="quick-start" aria-label="快速开始">
+          <span className="quick-start-title">快速开始</span>
+          <ol>
+            <li>填写原句 source、候选句 candidate，参考答案 reference 可选。</li>
+            <li>点击“生成对齐结果”，查看多行高亮和编辑组表格。</li>
+            <li>点击高亮片段或编辑组行，可以联动定位同一处修改。</li>
+          </ol>
+        </div>
       </header>
 
       <div className="workspace-layout">
@@ -114,7 +125,7 @@ export default function App() {
           {samples.length === 0 ? (
             <div className="result-stack">
               <div className="panel empty-result">
-                No sample loaded. Enter text or upload JSON to preview the alignment.
+                还没有样本。请在左侧手动填写 source/candidate，或上传 JSON 文件生成对齐结果。
               </div>
               <ModelAnalysisPanel />
             </div>
