@@ -5,6 +5,7 @@ import {
   ManualInputPanel,
   resizeAutoTextarea
 } from "./ManualInputPanel";
+import { I18nProvider } from "../i18n";
 
 describe("ManualInputPanel", () => {
   it("places list add and remove controls below each field title", () => {
@@ -36,6 +37,24 @@ describe("ManualInputPanel", () => {
     );
 
     expect(html.match(/class="auto-resize-textarea"/g) ?? []).toHaveLength(3);
+  });
+
+  it("shows neutral text-to-edit help in Chinese and English", () => {
+    const zhText = visibleText(
+      renderToStaticMarkup(
+        <ManualInputPanel onSubmit={() => undefined} onClear={() => undefined} />
+      )
+    );
+    const enText = visibleText(
+      renderToStaticMarkup(
+        <I18nProvider locale="en">
+          <ManualInputPanel onSubmit={() => undefined} onClear={() => undefined} />
+        </I18nProvider>
+      )
+    );
+
+    expect(zhText).toContain("待改句（可能正确，也可能有误）");
+    expect(enText).toContain("Text to Edit (may be correct or contain errors)");
   });
 
   it("does not number the single reference placeholder", () => {
@@ -83,4 +102,8 @@ function fakeTextarea(scrollHeight: number) {
       overflowY: ""
     }
   };
+}
+
+function visibleText(html: string): string {
+  return html.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 }

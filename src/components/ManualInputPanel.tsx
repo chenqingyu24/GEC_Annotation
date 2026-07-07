@@ -55,7 +55,7 @@ export function resizeAutoTextarea(
 }
 
 export function ManualInputPanel({ onSubmit, onClear }: ManualInputPanelProps) {
-  const { messages: m } = useI18n();
+  const { locale, messages: m } = useI18n();
   const sourceId = useId();
   const [source, setSource] = useState("");
   const [references, setReferences] = useState<string[]>([""]);
@@ -81,7 +81,12 @@ export function ManualInputPanel({ onSubmit, onClear }: ManualInputPanelProps) {
 
       <form className="stack" onSubmit={handleSubmit}>
         <label className="field" htmlFor={sourceId}>
-          <span className="field-label">{m.textToEdit}</span>
+          <span className="field-title">
+            <span className="field-label">{m.textToEdit}</span>
+            <span className="field-description">
+              {locale === "zh" ? `（${m.textToEditHelp}）` : ` (${m.textToEditHelp})`}
+            </span>
+          </span>
           <AutoResizeTextarea
             id={sourceId}
             value={source}

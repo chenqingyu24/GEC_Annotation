@@ -31,16 +31,28 @@ describe("styles", () => {
     expect(css).toMatch(/\.alignment-row-label\s*{[\s\S]*text-align:\s*center/);
   });
 
-  it("wraps alignment rows between slots without breaking slot text", () => {
+  it("centers ordinary highlight line labels horizontally and vertically", () => {
+    const block = blockFor(".highlight-line .line-label");
+
+    expect(block).toContain("display: flex");
+    expect(block).toContain("align-items: center");
+    expect(block).toContain("justify-content: center");
+    expect(block).toContain("text-align: center");
+  });
+
+  it("stretches alignment rows across available width without breaking slot text", () => {
     expect(blockFor(".alignment-row-content")).toContain("display: flex");
-    expect(blockFor(".alignment-row-content")).toContain("flex-wrap: wrap");
+    expect(blockFor(".alignment-row-content")).toContain("flex-wrap: nowrap");
     expect(blockFor(".alignment-cell")).toContain(
-      "flex: 0 0 calc(var(--alignment-slot-width) + 1.75em)"
+      "flex: 1 1 calc(var(--alignment-slot-width) + 2.25em)"
     );
+    expect(blockFor(".alignment-cell.alignment-slot-difference")).toContain("flex-grow: 0.45");
     expect(blockFor(".alignment-cell")).toContain("justify-content: center");
     expect(blockFor(".alignment-cell")).toContain("text-align: center");
     expect(blockFor(".alignment-cell")).toContain("white-space: pre");
     expect(blockFor(".alignment-cell")).not.toContain("overflow-wrap: anywhere");
+    expect(blockFor(".alignment-cell-content")).toContain("display: inline-flex");
+    expect(blockFor(".alignment-prefix-content")).toContain("min-width: 0");
     expect(blockFor(".alignment-cell .alignment-core-content")).toContain("white-space: pre");
   });
 

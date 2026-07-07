@@ -37,7 +37,7 @@ describe("ResultContent", () => {
     expect(html).toContain("待分析文本");
   });
 
-  it("shows plain rendered lines with a no-change note when a sample has no edit groups", () => {
+  it("shows the alignment grid and places the no-change note directly under highlights", () => {
     const view: DiffView = {
       id: "sample_plain",
       source: "我昨天去了学校。",
@@ -66,8 +66,15 @@ describe("ResultContent", () => {
     );
 
     expect(html).toContain("该样本没有检测到修改。");
+    expect(html).toContain("alignment-grid");
     expect(html).toContain("我昨天去了学校。");
     expect(html).not.toContain("data-source-slot");
+    expect(html.indexOf('aria-labelledby="highlight-view-title"')).toBeLessThan(
+      html.indexOf("该样本没有检测到修改。")
+    );
+    expect(html.indexOf("该样本没有检测到修改。")).toBeLessThan(
+      html.indexOf('aria-labelledby="model-analysis-title"')
+    );
   });
 
   it("renders alignment slots by default without legacy insertion symbols", () => {

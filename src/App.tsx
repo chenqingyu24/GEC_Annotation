@@ -249,10 +249,7 @@ export function ResultContent({
       ? selectedReferenceId
       : referenceIds[0] ?? null;
   const alignmentView = useMemo(
-    () =>
-      hasEditGroups
-        ? buildAlignmentView(view.source, view.targets, view.edit_groups, activeReferenceId)
-        : undefined,
+    () => buildAlignmentView(view.source, view.targets, view.edit_groups, activeReferenceId),
     [activeReferenceId, hasEditGroups, view.edit_groups, view.source, view.targets]
   );
 
@@ -269,6 +266,7 @@ export function ResultContent({
         selectedReferenceId={activeReferenceId}
         onReferenceChange={setSelectedReferenceId}
       />
+      {!hasEditGroups ? <div className="panel empty-result">{m.noEdits}</div> : null}
       <ModelAnalysisPanel />
       {hasEditGroups ? (
         <EditGroupTable
@@ -277,9 +275,7 @@ export function ResultContent({
           selectedGroupId={selectedGroupId}
           onSelectGroup={onSelectGroup}
         />
-      ) : (
-        <div className="panel empty-result">{m.noEdits}</div>
-      )}
+      ) : null}
     </div>
   );
 }

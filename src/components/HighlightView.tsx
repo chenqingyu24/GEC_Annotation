@@ -2,6 +2,7 @@ import { Fragment, type CSSProperties, type KeyboardEvent, type ReactNode } from
 import type {
   AlignmentCell,
   AlignmentCellPart,
+  AlignmentLine,
   AlignmentSlot,
   AlignmentView,
   RenderLine,
@@ -76,7 +77,7 @@ export function HighlightView({
         <div className="highlight-lines">
           {lines.map((line) => (
             <div className={`highlight-line line-${line.type}`} key={line.id}>
-              <div className="line-label">{formatLineLabel(line, lines, locale)}</div>
+              <div className="line-label">{renderLineLabel(line, lines, locale)}</div>
               <div className="sentence-line">
                 {highlightEnabled
                   ? renderSegmentsWithSlots(line, selectedGroupId, onSelectGroup)
@@ -193,7 +194,7 @@ function renderAlignmentGrid(
       {alignmentView.lines.map((line) => (
         <div className={`alignment-row line-${line.type}`} key={line.id}>
           <div className={`line-label alignment-row-label line-${line.type}`}>
-            {formatLineLabel(line, alignmentView.lines, locale)}
+            {renderLineLabel(line, alignmentView.lines, locale)}
           </div>
           <div className="alignment-row-content">
             {line.cells.map((cell, index) =>
@@ -230,6 +231,8 @@ function renderAlignmentCell(
   const className = [
     "alignment-cell",
     `alignment-op-${cell.op}`,
+    slot.is_difference ? "alignment-slot-difference" : "alignment-slot-plain",
+    `alignment-slot-kind-${slot.kind}`,
     cell.is_empty ? "is-empty" : "is-filled",
     isInteractive ? "is-interactive" : "",
     isSelected ? "is-selected" : ""
@@ -262,6 +265,26 @@ function renderAlignmentCell(
       ) : (
         <span className="alignment-cell-content">{renderAlignmentParts(cell.parts)}</span>
       )}
+    </span>
+  );
+}
+
+function renderLineLabel(
+  line: AlignmentLine | RenderLine,
+  lines: Array<AlignmentLine | RenderLine>,
+  locale: Locale
+): ReactNode {
+  const label = formatLineLabel(line, lines, locale);
+  const idMatch = line.type === "candidate" ? /^(.*)(\([^)]+\))$/.exec(label) : null;
+
+  if (!idMatch) {
+    return label;
+  }
+
+  return (
+    <span className="line-label-formatted">
+      <span className="line-label-main">{idMatch[1]}</span>
+      <span className="line-label-id">{idMatch[2]}</span>
     </span>
   );
 }

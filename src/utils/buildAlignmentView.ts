@@ -324,15 +324,19 @@ function targetPartOpOverride(
   sourceOp: SourceAlignmentOp,
   isPoint: boolean
 ): VisibleEditOp | undefined {
-  if (isPoint || sourceOp !== "replace" || !item) {
+  if (isPoint || sourceOp === "plain" || !item) {
     return undefined;
   }
 
-  return item.segments.some(
+  const hasTargetEdit = item.segments.some(
     (segment) => segment.op !== "equal" && segment.op !== "anchor"
-  )
-    ? "replace"
-    : undefined;
+  );
+
+  if (!hasTargetEdit) {
+    return sourceOp;
+  }
+
+  return sourceOp === "replace" ? "replace" : undefined;
 }
 
 function overrideSegmentOps(

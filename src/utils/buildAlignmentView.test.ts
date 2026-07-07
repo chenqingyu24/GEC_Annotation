@@ -216,6 +216,38 @@ describe("buildAlignmentView", () => {
     expect(lineById(refTwoAlignment, "source").cells[candidateEditIndex].op).toBe("replace");
   });
 
+  it("highlights a candidate that matches the source with the source cell operation", () => {
+    const diffView = buildDiffView({
+      id: "candidate_matches_source",
+      source: "他喜欢苹果。",
+      references: ["他喜欢香蕉。"],
+      candidates: [
+        { id: "model_a", text: "他喜欢香蕉。" },
+        { id: "model_b", text: "他喜欢苹果。" }
+      ]
+    });
+
+    const alignment = buildAlignmentView(
+      diffView.source,
+      diffView.targets,
+      diffView.edit_groups,
+      "ref_1"
+    );
+    const replaceIndex = alignment.slots.findIndex((slot) => slot.source_text === "苹果");
+
+    expect(replaceIndex).toBeGreaterThanOrEqual(0);
+    expect(lineById(alignment, "source").cells[replaceIndex]).toMatchObject({
+      text: "苹果",
+      op: "replace",
+      parts: [{ text: "苹果", op: "replace", role: "core" }]
+    });
+    expect(lineById(alignment, "model_b").cells[replaceIndex]).toMatchObject({
+      text: "苹果",
+      op: "replace",
+      parts: [{ text: "苹果", op: "replace", role: "core" }]
+    });
+  });
+
   it("keeps source text visible when the selected reference deletes it", () => {
     const diffView = buildDiffView({
       id: "reference_delete",

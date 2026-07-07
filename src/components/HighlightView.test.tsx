@@ -157,6 +157,83 @@ describe("HighlightView", () => {
     expect(html).not.toContain("grid-template-columns:");
   });
 
+  it("marks plain and difference slots so extra row width can be distributed", () => {
+    const sample: Sample = {
+      id: "wide_alignment",
+      source: "我昨天去学校。",
+      references: ["我昨天去了学校。"],
+      candidates: [
+        {
+          id: "model_a",
+          text: "我昨天去了学校。"
+        }
+      ]
+    };
+    const view = buildDiffView(sample);
+    const alignmentView = buildAlignmentView(
+      view.source,
+      view.targets,
+      view.edit_groups,
+      "ref_1"
+    );
+
+    const html = renderToStaticMarkup(
+      <HighlightView
+        lines={view.render_lines}
+        alignmentView={alignmentView}
+        selectedGroupId={null}
+        onSelectGroup={() => undefined}
+        highlightEnabled={true}
+        useLegacySymbols={false}
+        onToggleLegacySymbols={() => undefined}
+        selectedReferenceId="ref_1"
+        onReferenceChange={() => undefined}
+      />
+    );
+
+    expect(html).toContain("alignment-slot-plain");
+    expect(html).toContain("alignment-slot-difference");
+  });
+
+  it("wraps model ids onto their own label line", () => {
+    const sample: Sample = {
+      id: "wrapped_model_ids",
+      source: "他喜欢苹果。",
+      references: ["他喜欢香蕉。"],
+      candidates: [
+        { id: "model_a", text: "他喜欢香蕉。" },
+        { id: "model_b", text: "他喜欢苹果。" }
+      ]
+    };
+    const view = buildDiffView(sample);
+    const alignmentView = buildAlignmentView(
+      view.source,
+      view.targets,
+      view.edit_groups,
+      "ref_1"
+    );
+
+    const html = renderToStaticMarkup(
+      <HighlightView
+        lines={view.render_lines}
+        alignmentView={alignmentView}
+        selectedGroupId={null}
+        onSelectGroup={() => undefined}
+        highlightEnabled={true}
+        useLegacySymbols={false}
+        onToggleLegacySymbols={() => undefined}
+        selectedReferenceId="ref_1"
+        onReferenceChange={() => undefined}
+      />
+    );
+
+    expect(html).toContain('<span class="line-label-main">修改1</span>');
+    expect(html).toContain('<span class="line-label-id">(model_a)</span>');
+    expect(html).toContain('<span class="line-label-main">修改2</span>');
+    expect(html).toContain('<span class="line-label-id">(model_b)</span>');
+    expect(html).not.toContain(">修改1(model_a)<");
+  });
+
   it("renders source insertion targets as green empty alignment slots", () => {
     const sample: Sample = {
       id: "reference_insert",
@@ -191,7 +268,9 @@ describe("HighlightView", () => {
       />
     );
 
-    expect(html).toContain('class="alignment-cell alignment-op-insert is-empty is-interactive"');
+    expect(html).toContain("alignment-op-insert");
+    expect(html).toContain("alignment-slot-difference");
+    expect(html).toContain("is-empty is-interactive");
     expect(html).toContain(">参考答案2<");
     expect(html).not.toContain(">ref_2<");
   });
@@ -230,7 +309,9 @@ describe("HighlightView", () => {
       />
     );
 
-    expect(html).toContain('class="alignment-cell alignment-op-delete is-empty is-interactive"');
+    expect(html).toContain("alignment-op-delete");
+    expect(html).toContain("alignment-slot-difference");
+    expect(html).toContain("is-empty is-interactive");
     expect(html).toContain(">参考答案<");
     expect(html).not.toContain(">参考答案1<");
   });
