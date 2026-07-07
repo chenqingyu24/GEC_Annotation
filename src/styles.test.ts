@@ -14,4 +14,26 @@ describe("styles", () => {
     expect(css).not.toMatch(/\.input-panel textarea\s*{[\s\S]*height:\s*40px/);
     expect(css).toMatch(/\.auto-resize-textarea\s*{/);
   });
+
+  it("centers alignment row labels horizontally and vertically", () => {
+    expect(css).toMatch(/\.alignment-row-label\s*{[\s\S]*align-items:\s*center/);
+    expect(css).toMatch(/\.alignment-row-label\s*{[\s\S]*justify-content:\s*center/);
+    expect(css).toMatch(/\.alignment-row-label\s*{[\s\S]*text-align:\s*center/);
+  });
+
+  it("wraps alignment rows between slots without breaking slot text", () => {
+    expect(blockFor(".alignment-row-content")).toContain("display: flex");
+    expect(blockFor(".alignment-row-content")).toContain("flex-wrap: wrap");
+    expect(blockFor(".alignment-cell")).toContain(
+      "flex: 0 0 calc(var(--alignment-slot-width) + 1.75em)"
+    );
+    expect(blockFor(".alignment-cell")).toContain("white-space: pre");
+    expect(blockFor(".alignment-cell")).not.toContain("overflow-wrap: anywhere");
+    expect(blockFor(".alignment-cell .alignment-core-content")).toContain("white-space: pre");
+  });
 });
+
+function blockFor(selector: string): string {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return css.match(new RegExp(`${escapedSelector}\\s*{([^}]*)}`))?.[1] ?? "";
+}

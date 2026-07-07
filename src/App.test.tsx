@@ -54,7 +54,7 @@ describe("ResultContent", () => {
     expect(html).not.toContain("data-source-slot");
   });
 
-  it("renders symbolic edit tokens, legend, and alignment slots", () => {
+  it("renders alignment slots by default without legacy insertion symbols", () => {
     const view: DiffView = {
       id: "sample_symbols",
       source: "abc",
@@ -119,12 +119,13 @@ describe("ResultContent", () => {
       <ResultContent view={view} selectedGroupId={null} onSelectGroup={() => undefined} />
     );
 
-    expect(html).toContain("∅");
-    expect(html).toContain("/X\\");
-    expect(html).toContain("/\\");
-    expect(html).toContain("[");
-    expect(html).toContain("data-source-slot=\"1\"");
-    expect(html).toContain("data-source-slot=\"3\"");
+    expect(html).toContain("alignment-grid");
+    expect(html).toContain("data-alignment-empty=\"true\"");
+    expect(html).toContain("旧符号");
+    expect(html).toContain("X");
+    expect(html).not.toContain("/X\\");
+    expect(html).not.toContain("/\\");
+    expect(html).not.toContain("data-source-slot");
     expect(html).toContain("图例");
   });
 

@@ -1,5 +1,9 @@
 import { Fragment, type KeyboardEvent, type ReactNode } from "react";
 import type {
+  AlignmentCell,
+  AlignmentCellPart,
+  AlignmentSlot,
+  AlignmentView,
   DiffView,
   EditGroup,
   EditGroupItem,
@@ -11,15 +15,28 @@ import { DiffToken, type DiffTokenSegment } from "./DiffToken";
 
 interface EditGroupTableProps {
   view: DiffView;
+  alignmentView?: AlignmentView;
   selectedGroupId: string | null;
   onSelectGroup: (groupId: string) => void;
 }
 
 export function EditGroupTable({
   view,
+  alignmentView,
   selectedGroupId,
   onSelectGroup
 }: EditGroupTableProps) {
+  if (alignmentView) {
+    return (
+      <AlignmentEditGroupTable
+        view={view}
+        alignmentView={alignmentView}
+        selectedGroupId={selectedGroupId}
+        onSelectGroup={onSelectGroup}
+      />
+    );
+  }
+
   return (
     <section className="panel result-panel" aria-labelledby="edit-group-title">
       <div className="panel-header">
@@ -69,6 +86,80 @@ export function EditGroupTable({
   );
 }
 
+function AlignmentEditGroupTable({
+  view,
+  alignmentView,
+  selectedGroupId,
+  onSelectGroup
+}: {
+  view: DiffView;
+  alignmentView: AlignmentView;
+  selectedGroupId: string | null;
+  onSelectGroup: (groupId: string) => void;
+}) {
+  const sourceLine = alignmentView.lines.find((line) => line.id === "source");
+  const targetLines = view.targets
+    .map((target) => alignmentView.lines.find((line) => line.id === target.id))
+    .filter((line): line is AlignmentView["lines"][number] => Boolean(line));
+  const tableSlots = alignmentView.slots
+    .map((slot, index) => ({ slot, index }))
+    .filter(({ slot }) => slot.group_id || slot.is_difference);
+
+  if (!sourceLine) {
+    return null;
+  }
+
+  return (
+    <section className="panel result-panel" aria-labelledby="edit-group-title">
+      <div className="panel-header">
+        <h2 id="edit-group-title">编辑组表格</h2>
+      </div>
+
+      <div className="table-scroll">
+        <table className="edit-table alignment-edit-table">
+          <thead>
+            <tr>
+              <th scope="col">槽位</th>
+              <th scope="col">原位</th>
+              <th scope="col">原句片段</th>
+              {view.targets.map((target) => (
+                <th scope="col" key={target.id}>
+                  {targetLabel(target)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {tableSlots.map(({ slot, index }) => (
+              <tr
+                className={slot.group_id === selectedGroupId ? "is-selected" : ""}
+                key={slot.slot_id}
+                tabIndex={slot.group_id ? 0 : undefined}
+                onClick={() => slot.group_id && onSelectGroup(slot.group_id)}
+                onKeyDown={(event) =>
+                  slot.group_id && handleRowKeyDown(event, slot.group_id, onSelectGroup)
+                }
+              >
+                <th scope="row">
+                  <span className="group-id">{slot.slot_id}</span>
+                  {slot.group_id && slot.slot_id !== slot.group_id ? (
+                    <span className="group-range">{slot.group_id}</span>
+                  ) : null}
+                </th>
+                <td>{slotRange(slot)}</td>
+                <td>{renderAlignmentTableCell(sourceLine.cells[index])}</td>
+                {targetLines.map((line) => (
+                  <td key={line.id}>{renderAlignmentTableCell(line.cells[index])}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 function handleRowKeyDown(
   event: KeyboardEvent<HTMLTableRowElement>,
   groupId: string,
@@ -80,6 +171,53 @@ function handleRowKeyDown(
 
   event.preventDefault();
   onSelectGroup(groupId);
+}
+
+function renderAlignmentTableCell(cell: AlignmentCell | undefined): ReactNode {
+  if (!cell || cell.is_empty) {
+    return <span className="empty-slot-label">（空槽位）</span>;
+  }
+
+  return (
+    <span className={`table-alignment-cell alignment-op-${cell.op}`}>
+      {renderAlignmentTableParts(cell.parts)}
+    </span>
+  );
+}
+
+function renderAlignmentTableParts(parts: AlignmentCellPart[]): ReactNode {
+  const prefixParts = parts.filter((part) => part.role === "prefix-punctuation");
+  const coreParts = parts.filter((part) => part.role === "core");
+
+  return (
+    <>
+      <span className="alignment-prefix-content">
+        {prefixParts.map((part, index) => renderAlignmentTablePart(part, index))}
+      </span>
+      <span className="alignment-core-content">
+        {coreParts.map((part, index) => renderAlignmentTablePart(part, index))}
+      </span>
+    </>
+  );
+}
+
+function renderAlignmentTablePart(part: AlignmentCellPart, index: number): ReactNode {
+  return (
+    <span
+      className={["alignment-part", `alignment-part-op-${part.op}`].join(" ")}
+      key={`${part.role}-${index}`}
+    >
+      {part.text}
+    </span>
+  );
+}
+
+function slotRange(slot: AlignmentSlot): string {
+  if (slot.source_start === slot.source_end) {
+    return String(slot.source_start);
+  }
+
+  return `${slot.source_start}-${slot.source_end}`;
 }
 
 function renderSourceCell(group: EditGroup): ReactNode {

@@ -1,6 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import type { DiffView } from "../types";
+import type { DiffView, Sample } from "../types";
+import { buildAlignmentView } from "../utils/buildAlignmentView";
+import { buildDiffView } from "../utils/buildDiffView";
 import { EditGroupTable } from "./EditGroupTable";
 
 describe("EditGroupTable", () => {
@@ -43,5 +45,39 @@ describe("EditGroupTable", () => {
     expect(html).toContain("缩小");
     expect(html).toContain('data-source-slot="43"');
     expect(html).not.toContain('class="aligned-cell-content" data-source-slot="43" style=');
+  });
+
+  it("renders alignment slots with empty cells instead of legacy insertion markers", () => {
+    const sample: Sample = {
+      id: "slot_table",
+      source: "ab",
+      references: [],
+      candidates: [{ id: "candidate_1", text: "aXb" }]
+    };
+    const view = buildDiffView(sample);
+    const alignmentView = buildAlignmentView(
+      view.source,
+      view.targets,
+      view.edit_groups,
+      null
+    );
+
+    const html = renderToStaticMarkup(
+      <EditGroupTable
+        view={view}
+        alignmentView={alignmentView}
+        selectedGroupId={null}
+        onSelectGroup={() => undefined}
+      />
+    );
+
+    expect(html).toContain("槽位");
+    expect(html).toContain("candidate candidate_1");
+    expect(html).toContain("空槽位");
+    expect(html).toContain("X");
+    expect(html).not.toContain("说明");
+    expect(html).not.toContain("新增槽");
+    expect(html).not.toContain("/X\\");
+    expect(html).not.toContain("/\\");
   });
 });

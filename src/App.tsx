@@ -10,6 +10,7 @@ import {
 import { ModelAnalysisPanel } from "./components/ModelAnalysisPanel";
 import { SampleNavigator } from "./components/SampleNavigator";
 import type { DiffView, Sample } from "./types";
+import { buildAlignmentView } from "./utils/buildAlignmentView";
 import { buildDiffView } from "./utils/buildDiffView";
 import { buildManualSample } from "./utils/parseInput";
 
@@ -159,20 +160,43 @@ export function ResultContent({
 }: ResultContentProps) {
   const hasEditGroups = view.edit_groups.length > 0;
   const [highlightEnabled, setHighlightEnabled] = useState(true);
+  const [useLegacySymbols, setUseLegacySymbols] = useState(false);
+  const [selectedReferenceId, setSelectedReferenceId] = useState<string | null>(null);
+  const referenceIds = useMemo(
+    () => view.targets.filter((target) => target.type === "reference").map((target) => target.id),
+    [view.targets]
+  );
+  const activeReferenceId =
+    selectedReferenceId && referenceIds.includes(selectedReferenceId)
+      ? selectedReferenceId
+      : referenceIds[0] ?? null;
+  const alignmentView = useMemo(
+    () =>
+      hasEditGroups
+        ? buildAlignmentView(view.source, view.targets, view.edit_groups, activeReferenceId)
+        : undefined,
+    [activeReferenceId, hasEditGroups, view.edit_groups, view.source, view.targets]
+  );
 
   return (
     <div className="result-stack">
       <HighlightView
         lines={view.render_lines}
+        alignmentView={alignmentView}
         selectedGroupId={selectedGroupId}
         onSelectGroup={onSelectGroup}
         highlightEnabled={highlightEnabled}
         onToggleHighlight={() => setHighlightEnabled((enabled) => !enabled)}
+        useLegacySymbols={useLegacySymbols}
+        onToggleLegacySymbols={() => setUseLegacySymbols((enabled) => !enabled)}
+        selectedReferenceId={activeReferenceId}
+        onReferenceChange={setSelectedReferenceId}
       />
       <ModelAnalysisPanel />
       {hasEditGroups ? (
         <EditGroupTable
           view={view}
+          alignmentView={alignmentView}
           selectedGroupId={selectedGroupId}
           onSelectGroup={onSelectGroup}
         />

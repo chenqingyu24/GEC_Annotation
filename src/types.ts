@@ -66,6 +66,50 @@ export interface RenderLine {
   segments: RenderSegment[];
 }
 
+export type AlignmentSlotKind = "plain" | "replace" | "delete" | "insert" | "punctuation";
+export type AlignmentCellOp = "plain" | "replace" | "delete" | "insert" | "empty";
+export type AlignmentCellPartRole = "prefix-punctuation" | "core";
+
+export interface AlignmentCellPart {
+  text: string;
+  op: EditOp;
+  role: AlignmentCellPartRole;
+}
+
+export interface AlignmentCell {
+  text: string;
+  op: AlignmentCellOp;
+  is_empty: boolean;
+  group_id?: string;
+  parts: AlignmentCellPart[];
+}
+
+export interface AlignmentSlot {
+  slot_id: string;
+  kind: AlignmentSlotKind;
+  source_start: number;
+  source_end: number;
+  source_text: string;
+  group_id?: string;
+  label: string;
+  column_width_ch: number;
+  is_difference: boolean;
+}
+
+export interface AlignmentLine {
+  id: string;
+  type: "source" | "reference" | "candidate";
+  label: string;
+  text: string;
+  cells: AlignmentCell[];
+}
+
+export interface AlignmentView {
+  selected_reference_id: string | null;
+  slots: AlignmentSlot[];
+  lines: AlignmentLine[];
+}
+
 export interface DiffView {
   id: string;
   source: string;
