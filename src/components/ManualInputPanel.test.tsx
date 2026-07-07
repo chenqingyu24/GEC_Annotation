@@ -38,6 +38,15 @@ describe("ManualInputPanel", () => {
     expect(html.match(/class="auto-resize-textarea"/g) ?? []).toHaveLength(3);
   });
 
+  it("does not number the single reference placeholder", () => {
+    const html = renderToStaticMarkup(
+      <ManualInputPanel onSubmit={() => undefined} onClear={() => undefined} />
+    );
+
+    expect(html).toContain('placeholder="输入参考答案"');
+    expect(html).not.toContain('placeholder="输入参考答案1"');
+  });
+
   it("resizes below the five-row limit without internal scrolling", () => {
     const textarea = fakeTextarea(82);
 

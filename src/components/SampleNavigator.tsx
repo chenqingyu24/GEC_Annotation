@@ -1,5 +1,5 @@
 import type { Sample } from "../types";
-import { useI18n } from "../i18n";
+import { formatSampleLabel, useI18n } from "../i18n";
 
 interface SampleNavigatorProps {
   samples: Sample[];
@@ -12,13 +12,16 @@ export function SampleNavigator({
   currentIndex,
   onChange
 }: SampleNavigatorProps) {
-  const { messages: m } = useI18n();
+  const { locale, messages: m } = useI18n();
 
   if (samples.length === 0) {
     return null;
   }
 
   const currentSample = samples[currentIndex];
+  const currentSampleLabel = currentSample
+    ? formatSampleLabel(currentSample.id, locale)
+    : "";
 
   return (
     <nav className="sample-navigator" aria-label={m.sampleNavigatorAria}>
@@ -35,7 +38,7 @@ export function SampleNavigator({
         <span className="sample-count">
           {currentIndex + 1} / {samples.length}
         </span>
-        <strong>{currentSample?.id ?? ""}</strong>
+        <strong>{currentSampleLabel}</strong>
       </div>
 
       <label className="select-label">
@@ -46,7 +49,7 @@ export function SampleNavigator({
         >
           {samples.map((sample, index) => (
             <option value={index} key={`${sample.id}-${index}`}>
-              {index + 1}. {sample.id}
+              {index + 1}. {formatSampleLabel(sample.id, locale)}
             </option>
           ))}
         </select>

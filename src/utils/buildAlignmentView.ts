@@ -24,6 +24,7 @@ interface ExtractedItem {
 }
 
 type SourceAlignmentOp = "plain" | "replace" | "delete";
+type VisibleEditOp = Extract<EditOp, "replace" | "delete" | "insert">;
 
 export function buildAlignmentView(
   source: string,
@@ -117,17 +118,21 @@ function buildGroupSlots(
   const mainCellsByLineId: Record<string, AlignmentCell> = {};
   const referenceExtraction =
     activeReferenceId === null ? undefined : extractedByTarget.get(activeReferenceId);
+  const referenceMainSegments = referenceExtraction?.mainSegments ?? [];
+  const sourceOp = sourceOpFromReferenceSegments(referenceMainSegments);
 
   mainCellsByLineId.source = isPoint
-    ? emptyCell(group.group_id, sourceEmptyOpFromReferenceSegments(referenceExtraction?.mainSegments ?? []))
-    : sourceCellForGroup(group, referenceExtraction?.mainSegments ?? []);
+    ? emptyCell(group.group_id, sourceEmptyOpFromReferenceSegments(referenceMainSegments))
+    : sourceCellForGroup(group, sourceOp);
 
   for (const target of targets) {
     const extracted = extractedByTarget.get(target.id);
+    const item = group.items[target.id];
     mainCellsByLineId[target.id] = cellFromVisibleSegments(
       extracted?.mainSegments ?? [],
       "plain",
-      group.group_id
+      group.group_id,
+      targetPartOpOverride(item, sourceOp, isPoint)
     );
   }
 
@@ -242,9 +247,8 @@ function extractItemForSlots(
 
 function sourceCellForGroup(
   group: EditGroup,
-  referenceMainSegments: EditGroupItemSegment[]
+  op: SourceAlignmentOp
 ): AlignmentCell {
-  const op = sourceOpFromReferenceSegments(referenceMainSegments);
   const segmentOp: EditOp = op === "plain" ? "equal" : op;
 
   return {
@@ -262,11 +266,15 @@ function sourceCellForGroup(
 }
 
 function sourceOpFromReferenceSegments(segments: EditGroupItemSegment[]): SourceAlignmentOp {
-  if (segments.some((segment) => segment.op === "replace")) {
+  const hasReplace = segments.some((segment) => segment.op === "replace");
+  const hasDelete = segments.some((segment) => segment.op === "delete");
+  const hasInsert = segments.some((segment) => segment.op === "insert");
+
+  if (hasReplace || (hasDelete && hasInsert)) {
     return "replace";
   }
 
-  if (segments.some((segment) => segment.op === "delete")) {
+  if (hasDelete) {
     return "delete";
   }
 
@@ -286,14 +294,17 @@ function sourceEmptyOpFromReferenceSegments(
 function cellFromVisibleSegments(
   segments: EditGroupItemSegment[],
   fallbackOp: AlignmentCellOp,
-  groupId?: string
+  groupId?: string,
+  partOpOverride?: VisibleEditOp
 ): AlignmentCell {
   const visibleSegments = segments.filter(
     (segment) =>
       segment.op === "equal" || segment.op === "insert" || segment.op === "replace"
   );
   const text = visibleSegments.map((segment) => segment.text).join("");
-  const op = text ? cellOpFromSegments(segments, fallbackOp) : emptyOpFromSegments(segments);
+  const op = text
+    ? partOpOverride ?? cellOpFromSegments(segments, fallbackOp)
+    : emptyOpFromSegments(segments);
 
   if (!text) {
     return emptyCell(groupId, op);
@@ -304,8 +315,38 @@ function cellFromVisibleSegments(
     op,
     is_empty: false,
     group_id: groupId,
-    parts: partsFromSegments(visibleSegments)
+    parts: partsFromSegments(overrideSegmentOps(visibleSegments, partOpOverride))
   };
+}
+
+function targetPartOpOverride(
+  item: EditGroupItem | undefined,
+  sourceOp: SourceAlignmentOp,
+  isPoint: boolean
+): VisibleEditOp | undefined {
+  if (isPoint || sourceOp !== "replace" || !item) {
+    return undefined;
+  }
+
+  return item.segments.some(
+    (segment) => segment.op !== "equal" && segment.op !== "anchor"
+  )
+    ? "replace"
+    : undefined;
+}
+
+function overrideSegmentOps(
+  segments: EditGroupItemSegment[],
+  opOverride: VisibleEditOp | undefined
+): EditGroupItemSegment[] {
+  if (!opOverride) {
+    return segments;
+  }
+
+  return segments.map((segment) => ({
+    ...segment,
+    op: opOverride
+  }));
 }
 
 function emptyCell(groupId?: string, op: AlignmentCellOp = "empty"): AlignmentCell {

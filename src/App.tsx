@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { EditGroupTable } from "./components/EditGroupTable";
 import { HighlightView } from "./components/HighlightView";
-import { JsonPreview } from "./components/JsonPreview";
 import { JsonUploadPanel } from "./components/JsonUploadPanel";
 import {
   ManualInputPanel,
@@ -281,7 +280,6 @@ export function ResultContent({
       ) : (
         <div className="panel empty-result">{m.noEdits}</div>
       )}
-      <JsonPreview view={view} />
     </div>
   );
 }

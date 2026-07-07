@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="640" viewBox="0 0 1500 640">
+  <rect width="1500" height="640" fill="#f6f7f9"/>
+
+  <rect x="38" y="30" width="1424" height="580" rx="14" fill="#ffffff" stroke="#d9dee7"/>
+
+  <text x="70" y="76" font-family="Microsoft YaHei, Segoe UI, Arial, sans-serif" font-size="24" font-weight="700" fill="#111827">多行槽位对齐预览</text>
+  <text x="70" y="108" font-family="Microsoft YaHei, Segoe UI, Arial, sans-serif" font-size="15" fill="#5b6675">增删改均相对原句；source 行的“应新增/应删除/应替换”由当前参考基准决定。</text>
+
+  <rect x="70" y="132" width="184" height="38" rx="7" fill="#f8fafc" stroke="#c9d1dc"/>
+  <text x="88" y="156" font-family="Microsoft YaHei, Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#374151">参考基准：ref_1</text>
+  <path d="M232 146 L240 154 L248 146" fill="none" stroke="#4b5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="272" y="132" width="116" height="38" rx="19" fill="#edf8f8" stroke="#138a8a"/>
+  <circle cx="294" cy="151" r="13" fill="#138a8a"/>
+  <text x="318" y="156" font-family="Microsoft YaHei, Segoe UI, Arial, sans-serif" font-size="15" font-weight="700" fill="#26323f">旧符号 关</text>
+
+  <g font-family="Microsoft YaHei, Segoe UI, Arial, sans-serif" font-size="14" font-weight="700">
+    <rect x="830" y="134" width="72" height="30" rx="5" fill="#fff3cf"/>
+    <text x="846" y="154" fill="#6b3f00">替换</text>
+    <rect x="920" y="134" width="92" height="30" rx="5" fill="#eaf8f1"/>
+    <text x="936" y="154" fill="#116149">新增</text>
+    <rect x="1030" y="134" width="92" height="30" rx="5" fill="#fff0f0"/>
+    <text x="1046" y="154" fill="#9f2a2a">删除</text>
+    <rect x="1140" y="134" width="96" height="30" rx="5" fill="#ffffff" stroke="#c9d1dc" stroke-dasharray="5 4"/>
+    <text x="1156" y="154" fill="#6b7280">空槽位</text>
+  </g>
+
+  <line x1="70" y1="190" x2="1428" y2="190" stroke="#edf0f4"/>
+
+  <g font-family="Microsoft YaHei, Segoe UI, Arial, sans-serif" font-size="13" font-weight="700" fill="#6b7280">
+    <text x="222" y="220">句首</text>
+    <text x="394" y="220">动作</text>
+    <text x="520" y="220">药物</text>
+    <text x="660" y="220">新增槽</text>
+    <text x="872" y="220">适应症</text>
+    <text x="1110" y="220">后半句处理</text>
+  </g>
+
+  <g stroke="#e4e8ef" stroke-width="1">
+    <line x1="190" y1="235" x2="190" y2="535"/>
+    <line x1="345" y1="235" x2="345" y2="535"/>
+    <line x1="465" y1="235" x2="465" y2="535"/>
+    <line x1="585" y1="235" x2="585" y2="535"/>
+    <line x1="800" y1="235" x2="800" y2="535"/>
+    <line x1="980" y1="235" x2="980" y2="535"/>
+    <line x1="1370" y1="235" x2="1370" y2="535"/>
+  </g>
+
+  <g fill="#f8fafc" stroke="#e4e8ef">
+    <rect x="190" y="240" width="155" height="62"/>
+    <rect x="345" y="240" width="120" height="62"/>
+    <rect x="465" y="240" width="120" height="62"/>
+    <rect x="585" y="240" width="215" height="62" fill="#ffffff" stroke-dasharray="6 5"/>
+    <rect x="800" y="240" width="180" height="62"/>
+    <rect x="980" y="240" width="390" height="62"/>
+
+    <rect x="190" y="324" width="155" height="62"/>
+    <rect x="345" y="324" width="120" height="62" fill="#fff3cf"/>
+    <rect x="465" y="324" width="120" height="62"/>
+    <rect x="585" y="324" width="215" height="62" fill="#ffffff" stroke-dasharray="6 5"/>
+    <rect x="800" y="324" width="180" height="62"/>
+    <rect x="980" y="324" width="390" height="62"/>
+
+    <rect x="190" y="408" width="155" height="62"/>
+    <rect x="345" y="408" width="120" height="62" fill="#fff3cf"/>
+    <rect x="465" y="408" width="120" height="62"/>
+    <rect x="585" y="408" width="215" height="62" fill="#eaf8f1"/>
+    <rect x="800" y="408" width="180" height="62"/>
+    <rect x="980" y="408" width="390" height="62" fill="#fff3cf"/>
+
+    <rect x="190" y="492" width="155" height="62"/>
+    <rect x="345" y="492" width="120" height="62" fill="#fff3cf"/>
+    <rect x="465" y="492" width="120" height="62"/>
+    <rect x="585" y="492" width="215" height="62" fill="#ffffff" stroke-dasharray="6 5"/>
+    <rect x="800" y="492" width="180" height="62"/>
+    <rect x="980" y="492" width="390" height="62" fill="#fff3cf"/>
+  </g>
+
+  <g font-family="Microsoft YaHei, Segoe UI, Arial, sans-serif" font-size="18" font-weight="700" fill="#374151">
+    <text x="84" y="278">source</text>
+    <text x="84" y="362">ref_1</text>
+    <text x="84" y="446">candidate_1</text>
+    <text x="84" y="530">candidate_2</text>
+  </g>
+
+  <g font-family="Microsoft YaHei, Segoe UI, Arial, sans-serif" font-size="21" font-weight="650" fill="#111827">
+    <text x="218" y="278">医药部门</text>
+    <text x="375" y="278" fill="#6b3f00">降低</text>
+    <text x="493" y="278">了某药</text>
+    <text x="847" y="278">适应症范围</text>
+    <text x="1015" y="278">，</text>
+    <text x="1038" y="278">并禁止儿童使用</text>
+
+    <text x="218" y="362">医药部门</text>
+    <text x="375" y="362" fill="#6b3f00">缩小</text>
+    <text x="493" y="362">了某药</text>
+    <text x="847" y="362">适应症范围</text>
+    <text x="1015" y="362">，</text>
+    <text x="1038" y="362">并禁止儿童使用。</text>
+
+    <text x="218" y="446">医药部门</text>
+    <text x="375" y="446" fill="#6b3f00">明确</text>
+    <text x="493" y="446">了某药</text>
+    <text x="610" y="446" fill="#116149">儿童禁用，并将</text>
+    <text x="847" y="446">适应症范围</text>
+    <text x="1038" y="446" fill="#6b3f00">降到最低。</text>
+
+    <text x="218" y="530">医药部门</text>
+    <text x="375" y="530" fill="#6b3f00">缩小</text>
+    <text x="493" y="530">了某药</text>
+    <text x="847" y="530">适应症范围</text>
+    <text x="1038" y="530" fill="#6b3f00">降低到最低。</text>
+  </g>
+
+  <g font-family="Microsoft YaHei, Segoe UI, Arial, sans-serif" font-size="13" fill="#6b7280">
+    <text x="620" y="300">空槽：该行没有这段新增</text>
+    <text x="620" y="384">空槽：当前参考基准未新增</text>
+    <text x="610" y="468">candidate_1 相对 source 新增</text>
+    <text x="1008" y="574">同一后半句槽：前置标点贴边，核心文本从同一列开始</text>
+  </g>
+
+  <rect x="345" y="324" width="120" height="62" fill="none" stroke="#138a8a" stroke-width="2"/>
+  <rect x="585" y="408" width="215" height="62" fill="none" stroke="#138a8a" stroke-width="2"/>
+  <rect x="980" y="408" width="390" height="62" fill="none" stroke="#138a8a" stroke-width="2"/>
+</svg>

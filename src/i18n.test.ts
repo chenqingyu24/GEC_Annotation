@@ -16,6 +16,7 @@ describe("i18n label formatting", () => {
     const lines = [sourceLine, ...references, line("candidate_1", "candidate")];
 
     expect(formatLineLabel(sourceLine, lines, "zh")).toBe("待改句");
+    expect(formatLineLabel(references[0], [sourceLine, references[0]], "zh")).toBe("参考答案");
     expect(formatLineLabel(references[1], lines, "zh")).toBe("参考答案2");
   });
 
@@ -38,6 +39,7 @@ describe("i18n label formatting", () => {
     const lines = [sourceLine, ...references, line("gpt4", "candidate")];
 
     expect(formatLineLabel(sourceLine, lines, "en")).toBe("Text to Edit");
+    expect(formatLineLabel(references[0], [sourceLine, references[0]], "en")).toBe("Reference");
     expect(formatLineLabel(references[0], lines, "en")).toBe("Reference 1");
     expect(formatLineLabel(line("gpt4", "candidate"), lines, "en")).toBe("Revision(gpt4)");
   });

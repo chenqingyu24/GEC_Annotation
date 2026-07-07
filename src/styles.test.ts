@@ -44,8 +44,14 @@ describe("styles", () => {
     expect(blockFor(".alignment-cell .alignment-core-content")).toContain("white-space: pre");
   });
 
-  it("slightly reduces source alignment text size", () => {
-    expect(blockFor(".alignment-row.line-source .alignment-cell")).toContain("font-size: 15px");
+  it("uses the same alignment cell font size for every row", () => {
+    expect(blockFor(".alignment-cell")).toContain("font-size: 16px");
+    expect(css).not.toMatch(/\.alignment-row\.line-source \.alignment-cell\s*{[\s\S]*font-size/);
+  });
+
+  it("uses one font setup for every alignment row so slot borders stay aligned", () => {
+    expect(blockFor(".alignment-grid")).toContain("font-family:");
+    expect(blockFor(".alignment-cell")).toContain("line-height: 1.5");
   });
 
   it("colors insert empty alignment slots green", () => {
@@ -55,6 +61,24 @@ describe("styles", () => {
     expect(blockFor(".alignment-cell.alignment-op-insert.is-empty .alignment-empty-content")).toContain(
       "border-color: #49a383"
     );
+  });
+
+  it("colors delete empty alignment slots red", () => {
+    expect(blockFor(".alignment-cell.alignment-op-delete.is-empty")).toContain(
+      "background: #fff0f0"
+    );
+    expect(blockFor(".alignment-cell.alignment-op-delete.is-empty .alignment-empty-content")).toContain(
+      "border-color: #d36b6b"
+    );
+  });
+
+  it("does not draw an extra wrapper around the native JSON file chooser", () => {
+    expect(css).not.toMatch(/\.file-input\s*{/);
+    expect(css).not.toMatch(/\.file-input:focus-within/);
+  });
+
+  it("does not include JSON preview styles after removing the preview panel", () => {
+    expect(css).not.toMatch(/\.json-preview\s*{/);
   });
 });
 

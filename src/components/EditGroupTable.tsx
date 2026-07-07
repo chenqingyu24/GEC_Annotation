@@ -11,7 +11,12 @@ import type {
   SegmentType,
   Target
 } from "../types";
-import { formatTargetLabel, useI18n, type Locale } from "../i18n";
+import {
+  formatEditGroupLabel,
+  formatTargetLabel,
+  useI18n,
+  type Locale
+} from "../i18n";
 import { DiffToken, type DiffTokenSegment } from "./DiffToken";
 
 interface EditGroupTableProps {
@@ -69,7 +74,9 @@ export function EditGroupTable({
                 onKeyDown={(event) => handleRowKeyDown(event, group.group_id, onSelectGroup)}
               >
                 <th scope="row">
-                  <span className="group-id">{group.group_id}</span>
+                  <span className="group-id">
+                    {formatEditGroupLabel(group.group_id, locale)}
+                  </span>
                   <span className="group-range">
                     {group.source_start === group.source_end
                       ? group.source_start
@@ -145,9 +152,13 @@ function AlignmentEditGroupTable({
                 }
               >
                 <th scope="row">
-                  <span className="group-id">{slot.slot_id}</span>
+                  <span className="group-id">
+                    {formatEditGroupLabel(slot.slot_id, locale)}
+                  </span>
                   {slot.group_id && slot.slot_id !== slot.group_id ? (
-                    <span className="group-range">{slot.group_id}</span>
+                    <span className="group-range">
+                      {formatEditGroupLabel(slot.group_id, locale)}
+                    </span>
                   ) : null}
                 </th>
                 <td>{slotRange(slot)}</td>

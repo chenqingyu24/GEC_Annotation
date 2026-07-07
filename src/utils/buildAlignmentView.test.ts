@@ -20,6 +20,93 @@ const medicalSample: Sample = {
 };
 
 describe("buildAlignmentView", () => {
+  it("classifies common Chinese correction types by alignment operation", () => {
+    const cases = [
+      {
+        name: "word order error with a shortened revision",
+        source: "我打喜欢篮球",
+        references: ["我喜欢打篮球"],
+        candidates: [{ id: "candidate_1", text: "我喜欢篮球" }],
+        referenceId: "ref_1",
+        groupText: "打喜欢",
+        expected: {
+          source: { text: "打喜欢", op: "replace", partOps: ["replace"] },
+          ref_1: { text: "喜欢打", op: "replace", partOps: ["replace", "replace"] },
+          candidate_1: { text: "喜欢", op: "replace", partOps: ["replace"] }
+        }
+      },
+      {
+        name: "missing aspect particle",
+        source: "我昨天去学校",
+        references: ["我昨天去了学校"],
+        candidates: [{ id: "candidate_1", text: "我昨天去了学校" }],
+        referenceId: "ref_1",
+        targetText: "了",
+        expected: {
+          source: { text: "", op: "insert", partOps: [] },
+          ref_1: { text: "了", op: "insert", partOps: ["insert"] },
+          candidate_1: { text: "了", op: "insert", partOps: ["insert"] }
+        }
+      },
+      {
+        name: "redundant adverb deletion",
+        source: "我很非常喜欢篮球",
+        references: ["我非常喜欢篮球"],
+        candidates: [{ id: "candidate_1", text: "我非常喜欢篮球" }],
+        referenceId: "ref_1",
+        groupText: "很",
+        expected: {
+          source: { text: "很", op: "delete", partOps: ["delete"] },
+          ref_1: { text: "", op: "delete", partOps: [] },
+          candidate_1: { text: "", op: "delete", partOps: [] }
+        }
+      },
+      {
+        name: "collocation replacement",
+        source: "他做了一个错误",
+        references: ["他犯了一个错误"],
+        candidates: [{ id: "candidate_1", text: "他犯了一个错误" }],
+        referenceId: "ref_1",
+        groupText: "做",
+        expected: {
+          source: { text: "做", op: "replace", partOps: ["replace"] },
+          ref_1: { text: "犯", op: "replace", partOps: ["replace"] },
+          candidate_1: { text: "犯", op: "replace", partOps: ["replace"] }
+        }
+      }
+    ];
+
+    for (const correctionCase of cases) {
+      const diffView = buildDiffView({
+        id: correctionCase.name,
+        source: correctionCase.source,
+        references: correctionCase.references,
+        candidates: correctionCase.candidates
+      });
+      const alignment = buildAlignmentView(
+        diffView.source,
+        diffView.targets,
+        diffView.edit_groups,
+        correctionCase.referenceId
+      );
+      const slotIndex = alignment.slots.findIndex((slot, index) => {
+        if ("groupText" in correctionCase) {
+          return slot.source_text === correctionCase.groupText;
+        }
+
+        return lineById(alignment, "ref_1").cells[index].text === correctionCase.targetText;
+      });
+
+      expect(slotIndex, correctionCase.name).toBeGreaterThanOrEqual(0);
+      expectCell(lineById(alignment, "source").cells[slotIndex], correctionCase.expected.source);
+      expectCell(lineById(alignment, "ref_1").cells[slotIndex], correctionCase.expected.ref_1);
+      expectCell(
+        lineById(alignment, "candidate_1").cells[slotIndex],
+        correctionCase.expected.candidate_1
+      );
+    }
+  });
+
   it("expands candidate insertions as empty slots and keeps added sentence punctuation separate", () => {
     const diffView = buildDiffView(medicalSample);
 
@@ -201,4 +288,15 @@ function lineById(
   }
 
   return line;
+}
+
+function expectCell(
+  cell: ReturnType<typeof buildAlignmentView>["lines"][number]["cells"][number],
+  expected: { text: string; op: string; partOps: string[] }
+) {
+  expect(cell).toMatchObject({
+    text: expected.text,
+    op: expected.op
+  });
+  expect(cell.parts.map((part) => part.op)).toEqual(expected.partOps);
 }

@@ -195,6 +195,45 @@ describe("HighlightView", () => {
     expect(html).toContain(">参考答案2<");
     expect(html).not.toContain(">ref_2<");
   });
+
+  it("renders candidate deletions as red empty alignment slots", () => {
+    const sample: Sample = {
+      id: "candidate_delete",
+      source: "我打喜欢篮球",
+      references: ["我打喜欢篮球"],
+      candidates: [
+        {
+          id: "candidate_1",
+          text: "我喜欢篮球"
+        }
+      ]
+    };
+    const view = buildDiffView(sample);
+    const alignmentView = buildAlignmentView(
+      view.source,
+      view.targets,
+      view.edit_groups,
+      "ref_1"
+    );
+
+    const html = renderToStaticMarkup(
+      <HighlightView
+        lines={view.render_lines}
+        alignmentView={alignmentView}
+        selectedGroupId={null}
+        onSelectGroup={() => undefined}
+        highlightEnabled={true}
+        useLegacySymbols={false}
+        onToggleLegacySymbols={() => undefined}
+        selectedReferenceId="ref_1"
+        onReferenceChange={() => undefined}
+      />
+    );
+
+    expect(html).toContain('class="alignment-cell alignment-op-delete is-empty is-interactive"');
+    expect(html).toContain(">参考答案<");
+    expect(html).not.toContain(">参考答案1<");
+  });
 });
 
 function countOccurrences(text: string, search: string): number {

@@ -43,6 +43,8 @@ describe("EditGroupTable", () => {
 
     expect(html).toContain("降低");
     expect(html).toContain("缩小");
+    expect(html).toContain("编辑组1");
+    expect(html).not.toContain(">edit_group_1<");
     expect(html).toContain('data-source-slot="43"');
     expect(html).not.toContain('class="aligned-cell-content" data-source-slot="43" style=');
   });

@@ -1,4 +1,4 @@
-import type { ChangeEvent } from "react";
+import { useId, useState, type ChangeEvent } from "react";
 import { useI18n } from "../i18n";
 import type { Sample } from "../types";
 import { parseJsonSamples } from "../utils/parseInput";
@@ -18,15 +18,19 @@ export function JsonUploadPanel({
   onError
 }: JsonUploadPanelProps) {
   const { locale, messages: m } = useI18n();
+  const inputId = useId();
+  const [selectedFileName, setSelectedFileName] = useState("");
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
     const file = input.files?.[0];
 
     if (!file) {
+      setSelectedFileName("");
       return;
     }
 
+    setSelectedFileName(file.name);
     onError("");
     const warnings: string[] = [];
 
@@ -55,6 +59,7 @@ export function JsonUploadPanel({
       onError(messageFromError(error));
     } finally {
       input.value = "";
+      setSelectedFileName("");
     }
   };
 
@@ -64,9 +69,20 @@ export function JsonUploadPanel({
         <h2 id="json-upload-title">{m.jsonUploadTitle}</h2>
       </div>
 
-      <label className="file-input">
-        <input type="file" accept="application/json,.json" onChange={handleFileChange} />
-      </label>
+      <div className="json-file-picker">
+        <input
+          id={inputId}
+          className="sr-only"
+          type="file"
+          accept="application/json,.json"
+          aria-label={m.chooseJsonFile}
+          onChange={handleFileChange}
+        />
+        <label className="secondary-button json-file-button" htmlFor={inputId}>
+          {m.chooseJsonFile}
+        </label>
+        <span className="json-file-name">{selectedFileName || m.noFileSelected}</span>
+      </div>
     </section>
   );
 }

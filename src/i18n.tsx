@@ -39,14 +39,17 @@ export const messages = {
     generateResult: "生成对齐结果",
     clear: "清空",
     noReferences: "未添加参考答案。",
-    referenceLabel: (index: number) => `参考答案${index + 1}`,
+    referenceLabel: (index: number, total: number) =>
+      total === 1 ? "参考答案" : `参考答案${index + 1}`,
     revisionLabel: (index: number, total: number) =>
       total === 1 ? "修改句" : `修改${index + 1}`,
-    referencePlaceholder: (index: number) => `输入参考答案${index + 1}`,
+    referencePlaceholder: (index: number, total: number) =>
+      total === 1 ? "输入参考答案" : `输入参考答案${index + 1}`,
     revisionPlaceholder: (index: number, total: number) =>
       total === 1 ? "输入修改句" : `输入修改${index + 1}`,
     jsonUploadTitle: "JSON 上传",
     chooseJsonFile: "选择 JSON 文件",
+    noFileSelected: "未选择文件",
     largeFileWarning: "文件超过 10MB，解析和当前样本对齐可能较慢。",
     manySamplesWarning: "样本数量超过 3000 条，建议拆分文件以保持页面响应速度。",
     jsonParseFailure: (message: string) => `JSON 解析失败：${message}`,
@@ -70,7 +73,6 @@ export const messages = {
     sourcePosition: "原位",
     sourceFragment: "待改句片段",
     emptySlotLabel: "（空槽位）",
-    jsonPreview: "JSON 预览",
     sampleNavigatorAria: "样本切换",
     previousSample: "上一条",
     nextSample: "下一条",
@@ -126,14 +128,17 @@ export const messages = {
     generateResult: "Generate Alignment",
     clear: "Clear",
     noReferences: "No references added.",
-    referenceLabel: (index: number) => `Reference ${index + 1}`,
+    referenceLabel: (index: number, total: number) =>
+      total === 1 ? "Reference" : `Reference ${index + 1}`,
     revisionLabel: (index: number, total: number) =>
       total === 1 ? "Revision" : `Revision ${index + 1}`,
-    referencePlaceholder: (index: number) => `Enter Reference ${index + 1}`,
+    referencePlaceholder: (index: number, total: number) =>
+      total === 1 ? "Enter Reference" : `Enter Reference ${index + 1}`,
     revisionPlaceholder: (index: number, total: number) =>
       total === 1 ? "Enter Revision" : `Enter Revision ${index + 1}`,
     jsonUploadTitle: "JSON Upload",
     chooseJsonFile: "Choose JSON File",
+    noFileSelected: "No file selected",
     largeFileWarning: "File exceeds 10 MB. Parsing and alignment may be slow.",
     manySamplesWarning: "More than 3000 samples loaded. Split the file to keep the page responsive.",
     jsonParseFailure: (message: string) => `JSON parse failed: ${message}`,
@@ -157,7 +162,6 @@ export const messages = {
     sourcePosition: "Source Position",
     sourceFragment: "Text to Edit Fragment",
     emptySlotLabel: "(empty slot)",
-    jsonPreview: "JSON Preview",
     sampleNavigatorAria: "Sample navigation",
     previousSample: "Previous",
     nextSample: "Next",
@@ -250,7 +254,14 @@ export function formatLineLabel(
 
   if (line.type === "reference") {
     const index = referenceIndex(line, allLines);
-    return locale === "zh" ? `参考答案${index}` : `Reference ${index}`;
+    const references = allLines.filter((candidateLine) => candidateLine.type === "reference");
+    const totalReferences = Math.max(1, references.length);
+
+    if (locale === "zh") {
+      return totalReferences === 1 ? "参考答案" : `参考答案${index}`;
+    }
+
+    return totalReferences === 1 ? "Reference" : `Reference ${index}`;
   }
 
   const candidates = allLines.filter((candidateLine) => candidateLine.type === "candidate");
@@ -270,6 +281,39 @@ export function formatLineLabel(
 
 export function formatTargetLabel(target: Target, targets: Target[], locale: Locale): string {
   return formatLineLabel(target, targets, locale);
+}
+
+export function formatSampleLabel(sampleId: string, locale: Locale): string {
+  if (sampleId === "manual_sample") {
+    return locale === "zh" ? "手动样本" : "Manual Sample";
+  }
+
+  const generatedSampleMatch = /^sample_(\d+)$/.exec(sampleId);
+  if (generatedSampleMatch) {
+    return locale === "zh"
+      ? `样本${generatedSampleMatch[1]}`
+      : `Sample ${generatedSampleMatch[1]}`;
+  }
+
+  return sampleId;
+}
+
+export function formatEditGroupLabel(groupId: string, locale: Locale): string {
+  const punctuationGroupMatch = /^edit_group_(\d+)_punct$/.exec(groupId);
+  if (punctuationGroupMatch) {
+    return locale === "zh"
+      ? `编辑组${punctuationGroupMatch[1]}标点`
+      : `Edit Group ${punctuationGroupMatch[1]} Punctuation`;
+  }
+
+  const generatedGroupMatch = /^edit_group_(\d+)$/.exec(groupId);
+  if (generatedGroupMatch) {
+    return locale === "zh"
+      ? `编辑组${generatedGroupMatch[1]}`
+      : `Edit Group ${generatedGroupMatch[1]}`;
+  }
+
+  return groupId;
 }
 
 function referenceIndex(line: LabelLine, allLines: LabelLine[]): number {

@@ -94,8 +94,8 @@ export function ManualInputPanel({ onSubmit, onClear }: ManualInputPanelProps) {
           title={m.references}
           description={m.referencesHelp}
           emptyNote={m.noReferences}
-          labelForIndex={(index) => m.referenceLabel(index)}
-          placeholderForIndex={(index) => m.referencePlaceholder(index)}
+          labelForIndex={(index, total) => m.referenceLabel(index, total)}
+          placeholderForIndex={(index, total) => m.referencePlaceholder(index, total)}
           values={references}
           onChange={setReferences}
           canRemoveLast

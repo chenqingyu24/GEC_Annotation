@@ -202,4 +202,59 @@ describe("ResultContent", () => {
       html.indexOf('aria-labelledby="edit-group-title"')
     );
   });
+
+  it("omits the raw JSON preview from result content", () => {
+    const view: DiffView = {
+      id: "sample_without_json_preview",
+      source: "我喜欢篮球",
+      targets: [{ id: "candidate_1", type: "candidate", text: "我喜欢打篮球" }],
+      edit_groups: [
+        {
+          group_id: "edit_group_1",
+          source_start: 3,
+          source_end: 3,
+          source_text: "",
+          items: {
+            candidate_1: {
+              text: "打",
+              op: "insert",
+              segments: [{ text: "打", op: "insert" }]
+            }
+          }
+        }
+      ],
+      render_lines: [
+        {
+          id: "source",
+          type: "source",
+          label: "source",
+          text: "我喜欢篮球",
+          segments: [
+            { text: "我喜欢", type: "plain" },
+            { text: "", type: "anchor", group_id: "edit_group_1", op: "anchor" },
+            { text: "篮球", type: "plain" }
+          ]
+        },
+        {
+          id: "candidate_1",
+          type: "candidate",
+          label: "candidate_1",
+          text: "我喜欢打篮球",
+          segments: [
+            { text: "我喜欢", type: "plain" },
+            { text: "打", type: "insert", group_id: "edit_group_1", op: "insert" },
+            { text: "篮球", type: "plain" }
+          ]
+        }
+      ]
+    };
+
+    const html = renderToStaticMarkup(
+      <ResultContent view={view} selectedGroupId={null} onSelectGroup={() => undefined} />
+    );
+
+    expect(html).not.toContain("JSON 预览");
+    expect(html).not.toContain("json-preview");
+    expect(html).not.toContain('"edit_groups"');
+  });
 });

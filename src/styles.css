@@ -64,7 +64,6 @@ input:focus,
 textarea:focus,
 select:focus,
 button:focus-visible,
-.file-input:focus-within,
 .edit-table tr:focus-visible,
 .highlight-span:focus-visible {
   outline: 2px solid #138a8a;
@@ -311,18 +310,29 @@ button:focus-visible,
   margin-bottom: 10px;
 }
 
-.file-input {
-  display: grid;
-  gap: 6px;
-  padding: 10px 12px;
-  color: #26323f;
-  border: 1px dashed #9aa8b8;
-  border-radius: 6px;
-  background: #fafbfc;
+.json-file-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  min-height: 36px;
 }
 
-.file-input input {
-  max-width: 100%;
+.json-file-button {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  cursor: pointer;
+}
+
+.json-file-picker input:focus-visible + .json-file-button {
+  outline: 2px solid #138a8a;
+  outline-offset: 2px;
+}
+
+.json-file-name {
+  color: #111827;
+  overflow-wrap: anywhere;
 }
 
 .status-stack {
@@ -576,6 +586,7 @@ button:focus-visible,
 .alignment-grid {
   display: grid;
   overflow-x: auto;
+  font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "Source Han Sans SC", sans-serif;
   border: 1px solid #e1e6ee;
   border-radius: 6px;
   background: #ffffff;
@@ -619,13 +630,10 @@ button:focus-visible,
   min-height: 42px;
   padding: 7px 6px;
   border-left: 1px dashed #dfe5ee;
-  line-height: 1.45;
+  font-size: 16px;
+  line-height: 1.5;
   text-align: center;
   white-space: pre;
-}
-
-.alignment-row.line-source .alignment-cell {
-  font-size: 15px;
 }
 
 .alignment-cell.is-interactive {
@@ -645,6 +653,11 @@ button:focus-visible,
   background: #eaf8f1;
 }
 
+.alignment-cell.alignment-op-delete.is-empty {
+  color: #9f2a2a;
+  background: #fff0f0;
+}
+
 .alignment-empty-content,
 .alignment-empty-sample {
   display: inline-block;
@@ -659,6 +672,11 @@ button:focus-visible,
 .alignment-cell.alignment-op-insert.is-empty .alignment-empty-content {
   border-color: #49a383;
   background: #eaf8f1;
+}
+
+.alignment-cell.alignment-op-delete.is-empty .alignment-empty-content {
+  border-color: #d36b6b;
+  background: #fff0f0;
 }
 
 .alignment-empty-sample {
@@ -827,22 +845,6 @@ button:focus-visible,
 
 .highlight-span.is-selected {
   box-shadow: inset 0 0 0 2px #138a8a;
-}
-
-.json-preview {
-  max-height: 460px;
-  margin: 0;
-  padding: 12px;
-  overflow: auto;
-  color: #172033;
-  background: #f8fafc;
-  border: 1px solid #e1e6ee;
-  border-radius: 6px;
-  font-family: "Cascadia Code", Consolas, "SFMono-Regular", monospace;
-  font-size: 12px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
 }
 
 .sr-only {
