@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { GrammarCheckResult, ModelConfig, ModelOption } from "../types";
 import { checkGrammar, fetchModelList } from "../services/modelApi";
 import { BROWSER_DEMO_API_BASE_URL, DEFAULT_MODEL_API_BASE_URL } from "../config/modelService";
+import { useI18n, type Locale } from "../i18n";
 
 interface ModelAnalysisPanelProps {
   initialInputText?: string;
@@ -9,36 +10,17 @@ interface ModelAnalysisPanelProps {
   initialResult?: GrammarCheckResult | null;
 }
 
-const DEFAULT_MODEL_OPTIONS: ModelOption[] = [
-  {
-    id: "rule-based-demo",
-    label: "本地规则演示",
-    provider: "local",
-    requires_api_key: false
-  },
-  {
-    id: "deepseek-v4-flash",
-    label: "DeepSeek V4 Flash",
-    provider: "deepseek",
-    requires_api_key: true
-  },
-  {
-    id: "deepseek-v4-pro",
-    label: "DeepSeek V4 Pro",
-    provider: "deepseek",
-    requires_api_key: true
-  }
-];
-
-const BROWSER_DEMO_MODEL_OPTIONS = DEFAULT_MODEL_OPTIONS.filter((model) => model.id === "rule-based-demo");
-
 export function ModelAnalysisPanel({
   initialInputText = "",
   initialSelectedText = "",
   initialResult = null
 }: ModelAnalysisPanelProps) {
+  const { locale, messages: m } = useI18n();
+  const defaultModelOptions = useMemo(() => defaultModelOptionsForLocale(locale), [locale]);
   const initialModelOptions =
-    DEFAULT_MODEL_API_BASE_URL === BROWSER_DEMO_API_BASE_URL ? BROWSER_DEMO_MODEL_OPTIONS : DEFAULT_MODEL_OPTIONS;
+    DEFAULT_MODEL_API_BASE_URL === BROWSER_DEMO_API_BASE_URL
+      ? browserDemoModelOptions(defaultModelOptions)
+      : defaultModelOptions;
   const [config, setConfig] = useState<ModelConfig>({
     baseUrl: DEFAULT_MODEL_API_BASE_URL,
     apiKey: "",
@@ -52,6 +34,27 @@ export function ModelAnalysisPanel({
   const [error, setError] = useState("");
   const [loadingModels, setLoadingModels] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+
+  useEffect(() => {
+    setConfig((currentConfig) => {
+      if (!hasOnlyDefaultModelIds(currentConfig.models)) {
+        return currentConfig;
+      }
+
+      const localizedModels =
+        DEFAULT_MODEL_API_BASE_URL === BROWSER_DEMO_API_BASE_URL
+          ? browserDemoModelOptions(defaultModelOptions)
+          : defaultModelOptions;
+
+      return {
+        ...currentConfig,
+        models: localizedModels,
+        selectedModel: localizedModels.some((model) => model.id === currentConfig.selectedModel)
+          ? currentConfig.selectedModel
+          : localizedModels[0]?.id ?? ""
+      };
+    });
+  }, [defaultModelOptions]);
 
   const updateConfig = <Key extends keyof ModelConfig>(key: Key, value: ModelConfig[Key]) => {
     setConfig((currentConfig) => ({
@@ -74,7 +77,7 @@ export function ModelAnalysisPanel({
           ? currentConfig.selectedModel
           : models[0]?.id ?? ""
       }));
-      setMessage(`已加载 ${models.length} 个模型。`);
+      setMessage(m.modelsLoaded(models.length));
     } catch (refreshError) {
       setError(messageFromError(refreshError));
     } finally {
@@ -96,17 +99,17 @@ export function ModelAnalysisPanel({
     }
 
     if (text === "") {
-      setError("请输入或选中文本。");
+      setError(m.enterOrSelectText);
       return;
     }
 
     if (config.baseUrl.trim() === "") {
-      setError("请先填写服务地址。");
+      setError(m.fillServiceUrl);
       return;
     }
 
     if (config.selectedModel.trim() === "") {
-      setError("请先选择模型。");
+      setError(m.selectModelFirst);
       return;
     }
 
@@ -128,29 +131,29 @@ export function ModelAnalysisPanel({
   return (
     <section className="panel result-panel model-analysis-panel" aria-labelledby="model-analysis-title">
       <div className="panel-header">
-        <h2 id="model-analysis-title">模型分析</h2>
+        <h2 id="model-analysis-title">{m.modelAnalysis}</h2>
       </div>
 
       <div className="model-config-grid">
         <label className="field">
-          <span className="field-label">大模型 API Key，本地模型可留空</span>
+          <span className="field-label">{m.apiKeyLabel}</span>
           <input
             type="password"
             value={config.apiKey}
             onChange={(event) => updateConfig("apiKey", event.target.value)}
-            placeholder="可留空"
+            placeholder={m.optional}
             autoComplete="off"
           />
         </label>
 
         <label className="field">
-          <span className="field-label">选择模型</span>
+          <span className="field-label">{m.selectModel}</span>
           <select
             value={config.selectedModel}
             onChange={(event) => updateConfig("selectedModel", event.target.value)}
           >
             {config.models.length === 0 ? (
-              <option value="">请先刷新模型</option>
+              <option value="">{m.refreshModelFirst}</option>
             ) : (
               config.models.map((model) => (
                 <option value={model.id} key={model.id}>
@@ -163,12 +166,12 @@ export function ModelAnalysisPanel({
       </div>
 
       <label className="field model-text-field">
-        <span className="field-label">待分析文本</span>
+        <span className="field-label">{m.textToAnalyze}</span>
         <textarea
           rows={3}
           value={inputText}
           onChange={(event) => setInputText(event.target.value)}
-          placeholder="输入待分析文本"
+          placeholder={m.textToAnalyzePlaceholder}
         />
       </label>
 
@@ -179,7 +182,7 @@ export function ModelAnalysisPanel({
           onClick={handleRefreshModels}
           disabled={loadingModels}
         >
-          {loadingModels ? "刷新中..." : "刷新模型"}
+          {loadingModels ? m.refreshingModels : m.refreshModels}
         </button>
         <button
           className="primary-button"
@@ -187,7 +190,7 @@ export function ModelAnalysisPanel({
           onClick={handleAnalyze}
           disabled={analyzing}
         >
-          {analyzing ? "分析中..." : "大模型分析"}
+          {analyzing ? m.analyzing : m.analyzeWithModel}
         </button>
       </div>
 
@@ -198,7 +201,7 @@ export function ModelAnalysisPanel({
 
       {selectedText ? (
         <div className="model-selected-text">
-          <span className="field-label">选中文本</span>
+          <span className="field-label">{m.selectedText}</span>
           <p>{selectedText}</p>
         </div>
       ) : null}
@@ -209,22 +212,24 @@ export function ModelAnalysisPanel({
 }
 
 function ModelResult({ result }: { result: GrammarCheckResult }) {
+  const { messages: m } = useI18n();
+
   return (
     <div className="model-result">
       <div className={result.has_error ? "model-verdict error-verdict" : "model-verdict ok-verdict"}>
-        {result.has_error ? "存在语法错误" : "无语法错误"}
+        {result.has_error ? m.grammarError : m.noGrammarError}
       </div>
 
       {result.corrected_text ? (
         <div className="model-result-block">
-          <span className="field-label">纠正句</span>
+          <span className="field-label">{m.correctedText}</span>
           <p>{result.corrected_text}</p>
         </div>
       ) : null}
 
       {result.explanation ? (
         <div className="model-result-block">
-          <span className="field-label">解释</span>
+          <span className="field-label">{m.explanation}</span>
           <p>{result.explanation}</p>
         </div>
       ) : null}
@@ -248,6 +253,38 @@ export function resolveAnalysisText(selectionText: string, inputText: string): s
   }
 
   return inputText.trim();
+}
+
+function defaultModelOptionsForLocale(locale: Locale): ModelOption[] {
+  return [
+    {
+      id: "rule-based-demo",
+      label: locale === "zh" ? "本地规则演示" : "Local Rule Demo",
+      provider: "local",
+      requires_api_key: false
+    },
+    {
+      id: "deepseek-v4-flash",
+      label: "DeepSeek V4 Flash",
+      provider: "deepseek",
+      requires_api_key: true
+    },
+    {
+      id: "deepseek-v4-pro",
+      label: "DeepSeek V4 Pro",
+      provider: "deepseek",
+      requires_api_key: true
+    }
+  ];
+}
+
+function browserDemoModelOptions(modelOptions: ModelOption[]): ModelOption[] {
+  return modelOptions.filter((model) => model.id === "rule-based-demo");
+}
+
+function hasOnlyDefaultModelIds(modelOptions: ModelOption[]): boolean {
+  const defaultIds = new Set(["rule-based-demo", "deepseek-v4-flash", "deepseek-v4-pro"]);
+  return modelOptions.every((model) => defaultIds.has(model.id));
 }
 
 function messageFromError(error: unknown): string {

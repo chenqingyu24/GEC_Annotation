@@ -7,12 +7,23 @@ import {
 } from "./ManualInputPanel";
 
 describe("ManualInputPanel", () => {
-  it("places list add and remove controls in the field header", () => {
+  it("places list add and remove controls below each field title", () => {
     const html = renderToStaticMarkup(
       <ManualInputPanel onSubmit={() => undefined} onClear={() => undefined} />
     );
 
-    expect(html.match(/class="field-group-actions"/g) ?? []).toHaveLength(2);
+    expect(html.match(/class="[^"]*\bfield-group-actions\b[^"]*"/g) ?? []).toHaveLength(2);
+    expect(html).toContain("参考答案");
+    expect(html).toContain("（可选，用作对照基准）");
+    expect(html).toContain("修改");
+    expect(html).toContain("（修改句是人类纠正的结果或者模型纠正的结果）");
+
+    const fieldHeaders = html.match(/<div class="field-group-header">[\s\S]*?<\/div>/g) ?? [];
+    expect(fieldHeaders).toHaveLength(2);
+    expect(fieldHeaders.every((header) => !header.includes("<button"))).toBe(true);
+    expect(html).toContain(
+      '</div><div class="field-group-actions field-group-actions-below"><button'
+    );
 
     const dynamicRows = html.match(/<div class="dynamic-row">[\s\S]*?<\/div>/g) ?? [];
     expect(dynamicRows).toHaveLength(2);

@@ -1,4 +1,5 @@
 import { type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useI18n } from "../i18n";
 import type { EditOp, RenderLine, SegmentType } from "../types";
 
 export interface DiffTokenSegment {
@@ -23,6 +24,7 @@ export function DiffToken({
   onSelectGroup,
   sourceSlot
 }: DiffTokenProps) {
+  const { messages: m } = useI18n();
   const isInteractive = Boolean(segment.group_id && onSelectGroup);
   const isSelected = segment.group_id === selectedGroupId;
   const isMissing = segment.type === "delete" && segment.op === "delete" && lineType !== "source";
@@ -60,7 +62,7 @@ export function DiffToken({
     <span
       className={className}
       data-source-slot={sourceSlot}
-      title={tokenTitle(segment, isMissing)}
+      title={tokenTitle(segment, isMissing, m.missingText)}
       style={style}
       {...interactiveProps}
     >
@@ -85,12 +87,16 @@ function tokenColorClass(segment: DiffTokenSegment): string {
   return "";
 }
 
-function tokenTitle(segment: DiffTokenSegment, isMissing: boolean): string | undefined {
+function tokenTitle(
+  segment: DiffTokenSegment,
+  isMissing: boolean,
+  missingText: (text: string) => string
+): string | undefined {
   if (!segment.group_id && !segment.text) {
     return undefined;
   }
 
-  const parts = [segment.group_id, isMissing && segment.text ? `missing: ${segment.text}` : ""]
+  const parts = [segment.group_id, isMissing && segment.text ? missingText(segment.text) : ""]
     .filter(Boolean)
     .join(" ");
 

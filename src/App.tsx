@@ -9,6 +9,15 @@ import {
 } from "./components/ManualInputPanel";
 import { ModelAnalysisPanel } from "./components/ModelAnalysisPanel";
 import { SampleNavigator } from "./components/SampleNavigator";
+import {
+  I18nProvider,
+  getStoredLocale,
+  messages,
+  nextLocale,
+  setStoredLocale,
+  useI18n,
+  type Locale
+} from "./i18n";
 import type { DiffView, Sample } from "./types";
 import { buildAlignmentView } from "./utils/buildAlignmentView";
 import { buildDiffView } from "./utils/buildDiffView";
@@ -20,11 +29,37 @@ interface CurrentViewResult {
 }
 
 export default function App() {
+  const [locale, setLocale] = useState<Locale>(() => getStoredLocale());
+
+  const handleLocaleToggle = () => {
+    setLocale((currentLocale) => {
+      const updatedLocale = nextLocale(currentLocale);
+      setStoredLocale(updatedLocale);
+      return updatedLocale;
+    });
+  };
+
+  return (
+    <I18nProvider locale={locale}>
+      <AppContent locale={locale} onLocaleToggle={handleLocaleToggle} />
+    </I18nProvider>
+  );
+}
+
+function AppContent({
+  locale,
+  onLocaleToggle
+}: {
+  locale: Locale;
+  onLocaleToggle: () => void;
+}) {
+  const m = messages[locale];
   const [samples, setSamples] = useState<Sample[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [error, setError] = useState("");
   const [warning, setWarning] = useState("");
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [highlightEnabled, setHighlightEnabled] = useState(true);
 
   const currentSample = samples[currentIndex];
   const currentResult = useMemo<CurrentViewResult>(() => {
@@ -41,10 +76,11 @@ export default function App() {
 
   const handleManualSubmit = (input: ManualInputPayload) => {
     try {
-      const sample = buildManualSample(input);
+      const sample = buildManualSample(input, locale);
       setSamples([sample]);
       setCurrentIndex(0);
       setSelectedGroupId(null);
+      setHighlightEnabled(true);
       setError("");
       setWarning("");
     } catch (submitError) {
@@ -56,6 +92,7 @@ export default function App() {
     setSamples(nextSamples);
     setCurrentIndex(0);
     setSelectedGroupId(null);
+    setHighlightEnabled(true);
     setError("");
   };
 
@@ -63,6 +100,7 @@ export default function App() {
     setSamples([]);
     setCurrentIndex(0);
     setSelectedGroupId(null);
+    setHighlightEnabled(true);
     setError("");
     setWarning("");
   };
@@ -82,21 +120,29 @@ export default function App() {
     <main className="app-shell">
       <header className="app-header">
         <div className="app-title-block">
-          <h1>中文语法纠错多候选对齐工具</h1>
-          <p className="app-subtitle">对齐原句、参考答案和多个候选句，快速检查同一位置的改动。</p>
+          <h1>{m.appTitle}</h1>
+          <p className="app-subtitle">{m.appSubtitle}</p>
         </div>
-        <div className="quick-start" aria-label="快速开始">
-          <span className="quick-start-title">快速开始</span>
+        <button
+          className="secondary-button compact-button language-toggle-button"
+          type="button"
+          onClick={onLocaleToggle}
+        >
+          {m.switchLanguage}
+        </button>
+        <div className="quick-start" aria-label={m.quickStartAria}>
+          <span className="quick-start-title">{m.quickStartTitle}</span>
+          <p className="quick-start-intro">{m.quickStartIntro}</p>
           <ol>
-            <li>填写原句 source、候选句 candidate，参考答案 reference 可选。</li>
-            <li>点击“生成对齐结果”，查看多行高亮和编辑组表格。</li>
-            <li>点击高亮片段或编辑组行，可以联动定位同一处修改。</li>
+            {m.quickStartItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
           </ol>
         </div>
       </header>
 
       <div className="workspace-layout">
-        <aside className="control-column" aria-label="Input options">
+        <aside className="control-column" aria-label={m.inputOptionsAria}>
           <ManualInputPanel onSubmit={handleManualSubmit} onClear={handleClear} />
           <JsonUploadPanel
             onSamplesLoaded={handleSamplesLoaded}
@@ -119,14 +165,16 @@ export default function App() {
         </aside>
 
         <section className="preview-column" aria-labelledby="results-title">
-          <div className="section-heading">
-            <h2 id="results-title">当前样本结果</h2>
-          </div>
+          <ResultsHeading
+            hasResult={Boolean(samples.length && currentResult.view)}
+            highlightEnabled={highlightEnabled}
+            onToggleHighlight={() => setHighlightEnabled((enabled) => !enabled)}
+          />
 
           {samples.length === 0 ? (
             <div className="result-stack">
               <div className="panel empty-result">
-                还没有样本。请在左侧手动填写 source/candidate，或上传 JSON 文件生成对齐结果。
+                {m.emptySample}
               </div>
               <ModelAnalysisPanel />
             </div>
@@ -135,6 +183,7 @@ export default function App() {
               view={currentResult.view}
               selectedGroupId={selectedGroupId}
               onSelectGroup={setSelectedGroupId}
+              highlightEnabled={highlightEnabled}
             />
           ) : (
             <div className="result-stack">
@@ -147,19 +196,49 @@ export default function App() {
   );
 }
 
+export function ResultsHeading({
+  hasResult,
+  highlightEnabled,
+  onToggleHighlight
+}: {
+  hasResult: boolean;
+  highlightEnabled: boolean;
+  onToggleHighlight: () => void;
+}) {
+  const { messages: m } = useI18n();
+
+  return (
+    <div className="section-heading">
+      <h2 id="results-title">{m.resultsTitle}</h2>
+      {hasResult ? (
+        <button
+          className="secondary-button compact-button result-highlight-toggle"
+          type="button"
+          aria-pressed={highlightEnabled}
+          onClick={onToggleHighlight}
+        >
+          {highlightEnabled ? m.hideHighlight : m.showHighlight}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 interface ResultContentProps {
   view: DiffView;
   selectedGroupId: string | null;
   onSelectGroup: (groupId: string) => void;
+  highlightEnabled?: boolean;
 }
 
 export function ResultContent({
   view,
   selectedGroupId,
-  onSelectGroup
+  onSelectGroup,
+  highlightEnabled = true
 }: ResultContentProps) {
+  const { messages: m } = useI18n();
   const hasEditGroups = view.edit_groups.length > 0;
-  const [highlightEnabled, setHighlightEnabled] = useState(true);
   const [useLegacySymbols, setUseLegacySymbols] = useState(false);
   const [selectedReferenceId, setSelectedReferenceId] = useState<string | null>(null);
   const referenceIds = useMemo(
@@ -186,7 +265,6 @@ export function ResultContent({
         selectedGroupId={selectedGroupId}
         onSelectGroup={onSelectGroup}
         highlightEnabled={highlightEnabled}
-        onToggleHighlight={() => setHighlightEnabled((enabled) => !enabled)}
         useLegacySymbols={useLegacySymbols}
         onToggleLegacySymbols={() => setUseLegacySymbols((enabled) => !enabled)}
         selectedReferenceId={activeReferenceId}
@@ -201,7 +279,7 @@ export function ResultContent({
           onSelectGroup={onSelectGroup}
         />
       ) : (
-        <div className="panel empty-result">该样本没有检测到修改。</div>
+        <div className="panel empty-result">{m.noEdits}</div>
       )}
       <JsonPreview view={view} />
     </div>

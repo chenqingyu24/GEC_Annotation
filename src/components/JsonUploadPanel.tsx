@@ -1,4 +1,5 @@
 import type { ChangeEvent } from "react";
+import { useI18n } from "../i18n";
 import type { Sample } from "../types";
 import { parseJsonSamples } from "../utils/parseInput";
 
@@ -16,6 +17,8 @@ export function JsonUploadPanel({
   onWarning,
   onError
 }: JsonUploadPanelProps) {
+  const { locale, messages: m } = useI18n();
+
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
     const file = input.files?.[0];
@@ -28,7 +31,7 @@ export function JsonUploadPanel({
     const warnings: string[] = [];
 
     if (file.size > TEN_MB) {
-      warnings.push("文件超过 10MB，解析和当前样本对齐可能较慢。");
+      warnings.push(m.largeFileWarning);
     }
 
     try {
@@ -38,12 +41,12 @@ export function JsonUploadPanel({
       try {
         parsed = JSON.parse(content);
       } catch (error) {
-        throw new Error(`JSON 解析失败：${messageFromError(error)}`);
+        throw new Error(m.jsonParseFailure(messageFromError(error)));
       }
 
-      const samples = parseJsonSamples(parsed);
+      const samples = parseJsonSamples(parsed, locale);
       if (samples.length > RECOMMENDED_SAMPLE_LIMIT) {
-        warnings.push("样本数量超过 3000 条，建议拆分文件以保持页面响应速度。");
+        warnings.push(m.manySamplesWarning);
       }
 
       onWarning(warnings.join(" "));
@@ -58,11 +61,10 @@ export function JsonUploadPanel({
   return (
     <section className="panel upload-panel" aria-labelledby="json-upload-title">
       <div className="panel-header">
-        <h2 id="json-upload-title">JSON 上传</h2>
+        <h2 id="json-upload-title">{m.jsonUploadTitle}</h2>
       </div>
 
       <label className="file-input">
-        <span>选择 JSON 文件</span>
         <input type="file" accept="application/json,.json" onChange={handleFileChange} />
       </label>
     </section>

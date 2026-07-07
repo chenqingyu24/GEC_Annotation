@@ -7,6 +7,7 @@ import {
   useRef,
   useState
 } from "react";
+import { useI18n } from "../i18n";
 
 export interface ManualInputPayload {
   source: string;
@@ -54,6 +55,7 @@ export function resizeAutoTextarea(
 }
 
 export function ManualInputPanel({ onSubmit, onClear }: ManualInputPanelProps) {
+  const { messages: m } = useI18n();
   const sourceId = useId();
   const [source, setSource] = useState("");
   const [references, setReferences] = useState<string[]>([""]);
@@ -74,41 +76,47 @@ export function ManualInputPanel({ onSubmit, onClear }: ManualInputPanelProps) {
   return (
     <section className="panel input-panel" aria-labelledby="manual-input-title">
       <div className="panel-header">
-        <h2 id="manual-input-title">手动输入</h2>
+        <h2 id="manual-input-title">{m.manualInputTitle}</h2>
       </div>
 
       <form className="stack" onSubmit={handleSubmit}>
         <label className="field" htmlFor={sourceId}>
-          <span className="field-label">原句</span>
+          <span className="field-label">{m.textToEdit}</span>
           <AutoResizeTextarea
             id={sourceId}
             value={source}
             onValueChange={setSource}
-            placeholder="输入 source"
+            placeholder={m.textToEditPlaceholder}
           />
         </label>
 
         <DynamicTextList
-          title="参考答案"
-          itemName="reference"
+          title={m.references}
+          description={m.referencesHelp}
+          emptyNote={m.noReferences}
+          labelForIndex={(index) => m.referenceLabel(index)}
+          placeholderForIndex={(index) => m.referencePlaceholder(index)}
           values={references}
           onChange={setReferences}
           canRemoveLast
         />
 
         <DynamicTextList
-          title="候选句"
-          itemName="candidate"
+          title={m.revisions}
+          description={m.revisionsHelp}
+          emptyNote=""
+          labelForIndex={(index, total) => m.revisionLabel(index, total)}
+          placeholderForIndex={(index, total) => m.revisionPlaceholder(index, total)}
           values={candidates}
           onChange={setCandidates}
         />
 
         <div className="button-row">
           <button className="primary-button" type="submit">
-            生成对齐结果
+            {m.generateResult}
           </button>
           <button className="secondary-button" type="button" onClick={handleClear}>
-            清空
+            {m.clear}
           </button>
         </div>
       </form>
@@ -118,7 +126,10 @@ export function ManualInputPanel({ onSubmit, onClear }: ManualInputPanelProps) {
 
 interface DynamicTextListProps {
   title: string;
-  itemName: string;
+  description?: string;
+  emptyNote: string;
+  labelForIndex: (index: number, total: number) => string;
+  placeholderForIndex: (index: number, total: number) => string;
   values: string[];
   onChange: (values: string[]) => void;
   canRemoveLast?: boolean;
@@ -126,11 +137,15 @@ interface DynamicTextListProps {
 
 function DynamicTextList({
   title,
-  itemName,
+  description,
+  emptyNote,
+  labelForIndex,
+  placeholderForIndex,
   values,
   onChange,
   canRemoveLast = false
 }: DynamicTextListProps) {
+  const { locale, messages: m } = useI18n();
   const baseId = useId();
   const canRemove = canRemoveLast || values.length > 1;
 
@@ -146,28 +161,36 @@ function DynamicTextList({
   return (
     <div className="field-group">
       <div className="field-group-header">
-        <span className="field-label">{title}</span>
-        <div className="field-group-actions">
-          <button
-            className="icon-text-button"
-            type="button"
-            onClick={() => onChange([...values, ""])}
-          >
-            添加
-          </button>
-          <button
-            className="secondary-button compact-button"
-            type="button"
-            onClick={() => removeValue(values.length - 1)}
-            disabled={!canRemove || values.length === 0}
-          >
-            删除
-          </button>
-        </div>
+        <span className="field-title">
+          <span className="field-label">{title}</span>
+          {description ? (
+            <span className="field-description">
+              {locale === "zh" ? `（${description}）` : `(${description})`}
+            </span>
+          ) : null}
+        </span>
+      </div>
+
+      <div className="field-group-actions field-group-actions-below">
+        <button
+          className="icon-text-button"
+          type="button"
+          onClick={() => onChange([...values, ""])}
+        >
+          {m.add}
+        </button>
+        <button
+          className="secondary-button compact-button"
+          type="button"
+          onClick={() => removeValue(values.length - 1)}
+          disabled={!canRemove || values.length === 0}
+        >
+          {m.delete}
+        </button>
       </div>
 
       {values.length === 0 ? (
-        <p className="empty-note">未添加参考答案。</p>
+        <p className="empty-note">{emptyNote}</p>
       ) : (
         <div className="dynamic-list">
           {values.map((value, index) => {
@@ -176,13 +199,13 @@ function DynamicTextList({
             return (
               <div className="dynamic-row" key={inputId}>
                 <label className="sr-only" htmlFor={inputId}>
-                  {title} {index + 1}
+                  {labelForIndex(index, values.length)}
                 </label>
                 <AutoResizeTextarea
                   id={inputId}
                   value={value}
                   onValueChange={(nextValue) => updateValue(index, nextValue)}
-                  placeholder={`${itemName}_${index + 1}`}
+                  placeholder={placeholderForIndex(index, values.length)}
                 />
               </div>
             );

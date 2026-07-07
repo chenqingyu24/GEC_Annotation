@@ -31,19 +31,18 @@ const lines: RenderLine[] = [
 ];
 
 describe("HighlightView", () => {
-  it("renders highlighted tokens and the hide button when highlighting is enabled", () => {
+  it("renders highlighted tokens without owning the page-level highlight toggle", () => {
     const html = renderToStaticMarkup(
       <HighlightView
         lines={lines}
         selectedGroupId={null}
         onSelectGroup={() => undefined}
         highlightEnabled={true}
-        onToggleHighlight={() => undefined}
       />
     );
 
-    expect(html).toContain("隐藏高亮");
-    expect(html).toContain('aria-pressed="true"');
+    expect(html).not.toContain("隐藏高亮");
+    expect(html).not.toContain("显示高亮");
     expect(html).toContain("replace-mark");
     expect(html).toContain('data-source-slot="1"');
     expect(html).toContain("图例");
@@ -58,12 +57,11 @@ describe("HighlightView", () => {
         selectedGroupId={null}
         onSelectGroup={() => undefined}
         highlightEnabled={false}
-        onToggleHighlight={() => undefined}
       />
     );
 
-    expect(html).toContain("显示高亮");
-    expect(html).toContain('aria-pressed="false"');
+    expect(html).not.toContain("显示高亮");
+    expect(html).not.toContain("隐藏高亮");
     expect(html).toContain(">abc<");
     expect(html).toContain(">adc<");
     expect(html).not.toContain("图例");
@@ -100,7 +98,6 @@ describe("HighlightView", () => {
         selectedGroupId={null}
         onSelectGroup={() => undefined}
         highlightEnabled={true}
-        onToggleHighlight={() => undefined}
         useLegacySymbols={false}
         onToggleLegacySymbols={() => undefined}
         selectedReferenceId="ref_1"
@@ -111,6 +108,7 @@ describe("HighlightView", () => {
     expect(html).toContain("alignment-grid");
     expect(html).toContain("参考基准");
     expect(html).toContain("旧符号");
+    expect(html).not.toContain("空槽位");
     expect(html).toContain("儿童禁用，并将");
     expect(html).toContain("降到最低");
     expect(html).toContain("data-alignment-empty=\"true\"");
@@ -145,7 +143,6 @@ describe("HighlightView", () => {
         selectedGroupId={null}
         onSelectGroup={() => undefined}
         highlightEnabled={true}
-        onToggleHighlight={() => undefined}
         useLegacySymbols={false}
         onToggleLegacySymbols={() => undefined}
         selectedReferenceId="ref_1"
@@ -158,6 +155,45 @@ describe("HighlightView", () => {
     expect(countOccurrences(html, 'class="line-label alignment-row-label')).toBe(3);
     expect(html).toContain('style="--alignment-slot-width:7em"');
     expect(html).not.toContain("grid-template-columns:");
+  });
+
+  it("renders source insertion targets as green empty alignment slots", () => {
+    const sample: Sample = {
+      id: "reference_insert",
+      source: "某药适应症范围",
+      references: ["某药适应症范围", "某药的适应症范围"],
+      candidates: [
+        {
+          id: "candidate_1",
+          text: "某药适应症范围"
+        }
+      ]
+    };
+    const view = buildDiffView(sample);
+    const alignmentView = buildAlignmentView(
+      view.source,
+      view.targets,
+      view.edit_groups,
+      "ref_2"
+    );
+
+    const html = renderToStaticMarkup(
+      <HighlightView
+        lines={view.render_lines}
+        alignmentView={alignmentView}
+        selectedGroupId={null}
+        onSelectGroup={() => undefined}
+        highlightEnabled={true}
+        useLegacySymbols={false}
+        onToggleLegacySymbols={() => undefined}
+        selectedReferenceId="ref_2"
+        onReferenceChange={() => undefined}
+      />
+    );
+
+    expect(html).toContain('class="alignment-cell alignment-op-insert is-empty is-interactive"');
+    expect(html).toContain(">参考答案2<");
+    expect(html).not.toContain(">ref_2<");
   });
 });
 

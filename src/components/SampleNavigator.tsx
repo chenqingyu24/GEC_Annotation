@@ -1,4 +1,5 @@
 import type { Sample } from "../types";
+import { useI18n } from "../i18n";
 
 interface SampleNavigatorProps {
   samples: Sample[];
@@ -11,6 +12,8 @@ export function SampleNavigator({
   currentIndex,
   onChange
 }: SampleNavigatorProps) {
+  const { messages: m } = useI18n();
+
   if (samples.length === 0) {
     return null;
   }
@@ -18,14 +21,14 @@ export function SampleNavigator({
   const currentSample = samples[currentIndex];
 
   return (
-    <nav className="sample-navigator" aria-label="样本切换">
+    <nav className="sample-navigator" aria-label={m.sampleNavigatorAria}>
       <button
         className="secondary-button compact-button"
         type="button"
         onClick={() => onChange(currentIndex - 1)}
         disabled={currentIndex <= 0}
       >
-        上一条
+        {m.previousSample}
       </button>
 
       <div className="sample-status">
@@ -36,7 +39,7 @@ export function SampleNavigator({
       </div>
 
       <label className="select-label">
-        <span className="sr-only">选择样本</span>
+        <span className="sr-only">{m.selectSample}</span>
         <select
           value={currentIndex}
           onChange={(event) => onChange(Number(event.target.value))}
@@ -55,7 +58,7 @@ export function SampleNavigator({
         onClick={() => onChange(currentIndex + 1)}
         disabled={currentIndex >= samples.length - 1}
       >
-        下一条
+        {m.nextSample}
       </button>
     </nav>
   );

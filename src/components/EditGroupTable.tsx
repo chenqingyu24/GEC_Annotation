@@ -11,6 +11,7 @@ import type {
   SegmentType,
   Target
 } from "../types";
+import { formatTargetLabel, useI18n, type Locale } from "../i18n";
 import { DiffToken, type DiffTokenSegment } from "./DiffToken";
 
 interface EditGroupTableProps {
@@ -26,6 +27,8 @@ export function EditGroupTable({
   selectedGroupId,
   onSelectGroup
 }: EditGroupTableProps) {
+  const { locale, messages: m } = useI18n();
+
   if (alignmentView) {
     return (
       <AlignmentEditGroupTable
@@ -40,18 +43,18 @@ export function EditGroupTable({
   return (
     <section className="panel result-panel" aria-labelledby="edit-group-title">
       <div className="panel-header">
-        <h2 id="edit-group-title">编辑组表格</h2>
+        <h2 id="edit-group-title">{m.editGroupTable}</h2>
       </div>
 
       <div className="table-scroll">
         <table className="edit-table">
           <thead>
             <tr>
-              <th scope="col">编辑组</th>
-              <th scope="col">原句片段</th>
+              <th scope="col">{m.editGroup}</th>
+              <th scope="col">{m.sourceFragment}</th>
               {view.targets.map((target) => (
                 <th scope="col" key={target.id}>
-                  {targetLabel(target)}
+                  {targetLabel(target, view.targets, locale)}
                 </th>
               ))}
             </tr>
@@ -97,6 +100,7 @@ function AlignmentEditGroupTable({
   selectedGroupId: string | null;
   onSelectGroup: (groupId: string) => void;
 }) {
+  const { locale, messages: m } = useI18n();
   const sourceLine = alignmentView.lines.find((line) => line.id === "source");
   const targetLines = view.targets
     .map((target) => alignmentView.lines.find((line) => line.id === target.id))
@@ -112,19 +116,19 @@ function AlignmentEditGroupTable({
   return (
     <section className="panel result-panel" aria-labelledby="edit-group-title">
       <div className="panel-header">
-        <h2 id="edit-group-title">编辑组表格</h2>
+        <h2 id="edit-group-title">{m.editGroupTable}</h2>
       </div>
 
       <div className="table-scroll">
         <table className="edit-table alignment-edit-table">
           <thead>
             <tr>
-              <th scope="col">槽位</th>
-              <th scope="col">原位</th>
-              <th scope="col">原句片段</th>
+              <th scope="col">{m.slot}</th>
+              <th scope="col">{m.sourcePosition}</th>
+              <th scope="col">{m.sourceFragment}</th>
               {view.targets.map((target) => (
                 <th scope="col" key={target.id}>
-                  {targetLabel(target)}
+                  {targetLabel(target, view.targets, locale)}
                 </th>
               ))}
             </tr>
@@ -147,9 +151,9 @@ function AlignmentEditGroupTable({
                   ) : null}
                 </th>
                 <td>{slotRange(slot)}</td>
-                <td>{renderAlignmentTableCell(sourceLine.cells[index])}</td>
+                <td>{renderAlignmentTableCell(sourceLine.cells[index], m.emptySlotLabel)}</td>
                 {targetLines.map((line) => (
-                  <td key={line.id}>{renderAlignmentTableCell(line.cells[index])}</td>
+                  <td key={line.id}>{renderAlignmentTableCell(line.cells[index], m.emptySlotLabel)}</td>
                 ))}
               </tr>
             ))}
@@ -173,9 +177,12 @@ function handleRowKeyDown(
   onSelectGroup(groupId);
 }
 
-function renderAlignmentTableCell(cell: AlignmentCell | undefined): ReactNode {
+function renderAlignmentTableCell(
+  cell: AlignmentCell | undefined,
+  emptySlotLabel: string
+): ReactNode {
   if (!cell || cell.is_empty) {
-    return <span className="empty-slot-label">（空槽位）</span>;
+    return <span className="empty-slot-label">{emptySlotLabel}</span>;
   }
 
   return (
@@ -366,6 +373,6 @@ function InsertMark({ text }: { text: string }) {
   return <span className="insert-mark">{`/${text}\\`}</span>;
 }
 
-function targetLabel(target: Target): string {
-  return target.type === "reference" ? `reference ${target.id}` : `candidate ${target.id}`;
+function targetLabel(target: Target, targets: Target[], locale: Locale): string {
+  return formatTargetLabel(target, targets, locale);
 }

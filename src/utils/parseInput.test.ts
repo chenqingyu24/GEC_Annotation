@@ -196,6 +196,6 @@ describe("buildManualSample", () => {
         references: [],
         candidates: ["", "   "]
       })
-    ).toThrow(/候选/);
+    ).toThrow(/修改/);
   });
 });

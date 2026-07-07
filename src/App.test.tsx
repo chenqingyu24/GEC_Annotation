@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import App, { ResultContent } from "./App";
+import App, { ResultContent, ResultsHeading } from "./App";
 import type { DiffView } from "./types";
 
 describe("ResultContent", () => {
@@ -8,14 +8,30 @@ describe("ResultContent", () => {
     const html = renderToStaticMarkup(<App />);
 
     expect(html).toContain("快速开始");
-    expect(html).toContain("填写原句 source、候选句 candidate");
-    expect(html).toContain("点击高亮片段或编辑组行");
+    expect(html).toContain("这个工具把待改句、参考答案和修改句按同一位置对齐");
+    expect(html).toContain("在“待改句”里填原始病句或待修改文本");
+    expect(html).toContain("“参考基准”决定新增和删除以哪条参考答案为标准");
+    expect(html).toContain(">English<");
+  });
+
+  it("places the highlight toggle next to the current sample result title", () => {
+    const html = renderToStaticMarkup(
+      <ResultsHeading
+        hasResult
+        highlightEnabled={true}
+        onToggleHighlight={() => undefined}
+      />
+    );
+
+    expect(html).toContain("当前样本结果");
+    expect(html).toContain("隐藏高亮");
+    expect(html).toContain('aria-pressed="true"');
   });
 
   it("shows the model analysis panel even when no sample is loaded", () => {
     const html = renderToStaticMarkup(<App />);
 
-    expect(html).toContain("还没有样本。请在左侧手动填写 source/candidate");
+    expect(html).toContain("还没有样本。请在左侧手动填写待改句/修改");
     expect(html).not.toContain("No sample loaded");
     expect(html).toContain('aria-labelledby="model-analysis-title"');
     expect(html).toContain("待分析文本");

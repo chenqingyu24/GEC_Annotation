@@ -72,7 +72,7 @@ describe("EditGroupTable", () => {
     );
 
     expect(html).toContain("槽位");
-    expect(html).toContain("candidate candidate_1");
+    expect(html).toContain("修改句");
     expect(html).toContain("空槽位");
     expect(html).toContain("X");
     expect(html).not.toContain("说明");

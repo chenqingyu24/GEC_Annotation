@@ -119,7 +119,7 @@ function buildGroupSlots(
     activeReferenceId === null ? undefined : extractedByTarget.get(activeReferenceId);
 
   mainCellsByLineId.source = isPoint
-    ? emptyCell(group.group_id)
+    ? emptyCell(group.group_id, sourceEmptyOpFromReferenceSegments(referenceExtraction?.mainSegments ?? []))
     : sourceCellForGroup(group, referenceExtraction?.mainSegments ?? []);
 
   for (const target of targets) {
@@ -271,6 +271,16 @@ function sourceOpFromReferenceSegments(segments: EditGroupItemSegment[]): Source
   }
 
   return "plain";
+}
+
+function sourceEmptyOpFromReferenceSegments(
+  segments: EditGroupItemSegment[]
+): AlignmentCellOp {
+  if (segments.some((segment) => segment.op === "insert")) {
+    return "insert";
+  }
+
+  return "empty";
 }
 
 function cellFromVisibleSegments(

@@ -7,6 +7,7 @@ import type {
   RenderLine,
   RenderSegment
 } from "../types";
+import { formatLineLabel, useI18n, type Locale } from "../i18n";
 import { DiffToken } from "./DiffToken";
 
 interface HighlightViewProps {
@@ -15,7 +16,6 @@ interface HighlightViewProps {
   selectedGroupId: string | null;
   onSelectGroup: (groupId: string) => void;
   highlightEnabled: boolean;
-  onToggleHighlight: () => void;
   useLegacySymbols?: boolean;
   onToggleLegacySymbols?: () => void;
   selectedReferenceId?: string | null;
@@ -34,18 +34,18 @@ export function HighlightView({
   selectedGroupId,
   onSelectGroup,
   highlightEnabled,
-  onToggleHighlight,
   useLegacySymbols = !alignmentView,
   onToggleLegacySymbols,
   selectedReferenceId,
   onReferenceChange
 }: HighlightViewProps) {
+  const { locale, messages: m } = useI18n();
   const shouldRenderAlignment = Boolean(alignmentView && highlightEnabled && !useLegacySymbols);
 
   return (
     <section className="panel result-panel" aria-labelledby="highlight-view-title">
       <div className="panel-header">
-        <h2 id="highlight-view-title">多行高亮</h2>
+        <h2 id="highlight-view-title">{m.highlightTitle}</h2>
         <div className="panel-header-actions">
           {alignmentView ? (
             <ReferenceSelector
@@ -61,30 +61,22 @@ export function HighlightView({
                 checked={useLegacySymbols}
                 onChange={onToggleLegacySymbols}
               />
-              <span>旧符号</span>
+              <span>{m.legacySymbols}</span>
             </label>
           ) : null}
           {highlightEnabled ? (
             shouldRenderAlignment ? <AlignmentLegend /> : <HighlightLegend />
           ) : null}
-          <button
-            className="secondary-button compact-button"
-            type="button"
-            aria-pressed={highlightEnabled}
-            onClick={onToggleHighlight}
-          >
-            {highlightEnabled ? "隐藏高亮" : "显示高亮"}
-          </button>
         </div>
       </div>
 
       {shouldRenderAlignment && alignmentView ? (
-        renderAlignmentGrid(alignmentView, selectedGroupId, onSelectGroup)
+        renderAlignmentGrid(alignmentView, selectedGroupId, onSelectGroup, locale)
       ) : (
         <div className="highlight-lines">
           {lines.map((line) => (
             <div className={`highlight-line line-${line.type}`} key={line.id}>
-              <div className="line-label">{line.label}</div>
+              <div className="line-label">{formatLineLabel(line, lines, locale)}</div>
               <div className="sentence-line">
                 {highlightEnabled
                   ? renderSegmentsWithSlots(line, selectedGroupId, onSelectGroup)
@@ -107,6 +99,7 @@ function ReferenceSelector({
   selectedReferenceId?: string | null;
   onReferenceChange?: (referenceId: string) => void;
 }) {
+  const { locale, messages: m } = useI18n();
   const references = alignmentView.lines.filter((line) => line.type === "reference");
 
   if (references.length === 0) {
@@ -118,7 +111,7 @@ function ReferenceSelector({
 
   return (
     <label className="reference-selector">
-      <span>参考基准</span>
+      <span>{m.referenceBase}</span>
       <select
         value={activeReferenceId}
         onChange={(event) => onReferenceChange?.(event.target.value)}
@@ -126,7 +119,7 @@ function ReferenceSelector({
       >
         {references.map((reference) => (
           <option value={reference.id} key={reference.id}>
-            {reference.id}
+            {formatLineLabel(reference, alignmentView.lines, locale)}
           </option>
         ))}
       </select>
@@ -135,52 +128,52 @@ function ReferenceSelector({
 }
 
 function HighlightLegend() {
+  const { messages: m } = useI18n();
+
   return (
-    <div className="highlight-legend" aria-label="图例">
-      <span className="legend-label">图例</span>
+    <div className="highlight-legend" aria-label={m.legend}>
+      <span className="legend-label">{m.legend}</span>
       <span className="legend-item">
-        <DiffToken segment={{ text: "替换", type: "replace", op: "replace" }} />
-        <span>替换</span>
+        <DiffToken segment={{ text: m.replace, type: "replace", op: "replace" }} />
+        <span>{m.replace}</span>
       </span>
       <span className="legend-item">
-        <DiffToken segment={{ text: "文本", type: "delete", op: "delete" }} lineType="source" />
-        <span>应移除</span>
+        <DiffToken segment={{ text: m.sampleText, type: "delete", op: "delete" }} lineType="source" />
+        <span>{m.shouldRemove}</span>
       </span>
       <span className="legend-item">
-        <DiffToken segment={{ text: "文本", type: "delete", op: "delete" }} lineType="candidate" />
-        <span>已移除</span>
+        <DiffToken segment={{ text: m.sampleText, type: "delete", op: "delete" }} lineType="candidate" />
+        <span>{m.removed}</span>
       </span>
       <span className="legend-item">
-        <DiffToken segment={{ text: "文本", type: "insert", op: "insert" }} />
-        <span>已新增</span>
+        <DiffToken segment={{ text: m.sampleText, type: "insert", op: "insert" }} />
+        <span>{m.inserted}</span>
       </span>
       <span className="legend-item">
         <DiffToken segment={{ text: "", type: "anchor", op: "anchor" }} />
-        <span>插入位</span>
+        <span>{m.insertionPoint}</span>
       </span>
     </div>
   );
 }
 
 function AlignmentLegend() {
+  const { messages: m } = useI18n();
+
   return (
-    <div className="highlight-legend" aria-label="图例">
-      <span className="legend-label">图例</span>
+    <div className="highlight-legend" aria-label={m.legend}>
+      <span className="legend-label">{m.legend}</span>
       <span className="legend-item">
         <span className="alignment-swatch alignment-op-replace" aria-hidden="true" />
-        <span>替换</span>
+        <span>{m.replace}</span>
       </span>
       <span className="legend-item">
         <span className="alignment-swatch alignment-op-delete" aria-hidden="true" />
-        <span>删除</span>
+        <span>{m.delete}</span>
       </span>
       <span className="legend-item">
         <span className="alignment-swatch alignment-op-insert" aria-hidden="true" />
-        <span>新增</span>
-      </span>
-      <span className="legend-item">
-        <span className="alignment-empty-sample" />
-        <span>空槽位</span>
+        <span>{m.insert}</span>
       </span>
     </div>
   );
@@ -189,7 +182,8 @@ function AlignmentLegend() {
 function renderAlignmentGrid(
   alignmentView: AlignmentView,
   selectedGroupId: string | null,
-  onSelectGroup: (groupId: string) => void
+  onSelectGroup: (groupId: string) => void,
+  locale: Locale
 ): ReactNode {
   return (
     <div
@@ -198,7 +192,9 @@ function renderAlignmentGrid(
     >
       {alignmentView.lines.map((line) => (
         <div className={`alignment-row line-${line.type}`} key={line.id}>
-          <div className={`line-label alignment-row-label line-${line.type}`}>{line.label}</div>
+          <div className={`line-label alignment-row-label line-${line.type}`}>
+            {formatLineLabel(line, alignmentView.lines, locale)}
+          </div>
           <div className="alignment-row-content">
             {line.cells.map((cell, index) =>
               renderAlignmentCell(

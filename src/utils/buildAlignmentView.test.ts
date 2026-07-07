@@ -158,6 +158,37 @@ describe("buildAlignmentView", () => {
       is_empty: true
     });
   });
+
+  it("marks source empty slots as insertions when the selected reference inserts text", () => {
+    const diffView = buildDiffView({
+      id: "reference_insert",
+      source: "某药适应症范围",
+      references: ["某药适应症范围", "某药的适应症范围"],
+      candidates: [{ id: "candidate_1", text: "某药适应症范围" }]
+    });
+
+    const alignment = buildAlignmentView(
+      diffView.source,
+      diffView.targets,
+      diffView.edit_groups,
+      "ref_2"
+    );
+    const insertedIndex = alignment.slots.findIndex(
+      (_slot, index) => lineById(alignment, "ref_2").cells[index].text === "的"
+    );
+
+    expect(insertedIndex).toBeGreaterThanOrEqual(0);
+    expect(lineById(alignment, "source").cells[insertedIndex]).toMatchObject({
+      text: "",
+      op: "insert",
+      is_empty: true
+    });
+    expect(lineById(alignment, "ref_2").cells[insertedIndex]).toMatchObject({
+      text: "的",
+      op: "insert",
+      is_empty: false
+    });
+  });
 });
 
 function lineById(
