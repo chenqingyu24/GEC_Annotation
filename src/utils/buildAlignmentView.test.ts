@@ -128,6 +128,36 @@ describe("buildAlignmentView", () => {
     expect(lineById(refOneAlignment, "source").cells[candidateEditIndex].op).toBe("plain");
     expect(lineById(refTwoAlignment, "source").cells[candidateEditIndex].op).toBe("replace");
   });
+
+  it("keeps source text visible when the selected reference deletes it", () => {
+    const diffView = buildDiffView({
+      id: "reference_delete",
+      source: "abc",
+      references: ["abc", "ac"],
+      candidates: [{ id: "candidate_1", text: "abc" }]
+    });
+
+    const alignment = buildAlignmentView(
+      diffView.source,
+      diffView.targets,
+      diffView.edit_groups,
+      "ref_2"
+    );
+    const deletedIndex = alignment.slots.findIndex((slot) => slot.source_text === "b");
+
+    expect(deletedIndex).toBeGreaterThanOrEqual(0);
+    expect(lineById(alignment, "source").cells[deletedIndex]).toMatchObject({
+      text: "b",
+      op: "delete",
+      is_empty: false,
+      parts: [{ text: "b", op: "delete", role: "core" }]
+    });
+    expect(lineById(alignment, "ref_2").cells[deletedIndex]).toMatchObject({
+      text: "",
+      op: "delete",
+      is_empty: true
+    });
+  });
 });
 
 function lineById(

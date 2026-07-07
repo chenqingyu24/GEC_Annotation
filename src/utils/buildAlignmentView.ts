@@ -245,17 +245,20 @@ function sourceCellForGroup(
   referenceMainSegments: EditGroupItemSegment[]
 ): AlignmentCell {
   const op = sourceOpFromReferenceSegments(referenceMainSegments);
+  const segmentOp: EditOp = op === "plain" ? "equal" : op;
 
-  return cellFromVisibleSegments(
-    [
+  return {
+    text: group.source_text,
+    op,
+    is_empty: false,
+    group_id: group.group_id,
+    parts: partsFromSegments([
       {
         text: group.source_text,
-        op: op === "plain" ? "equal" : op
+        op: segmentOp
       }
-    ],
-    op,
-    group.group_id
-  );
+    ])
+  };
 }
 
 function sourceOpFromReferenceSegments(segments: EditGroupItemSegment[]): SourceAlignmentOp {
