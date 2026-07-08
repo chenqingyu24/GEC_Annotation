@@ -5,10 +5,11 @@ import type {
   AlignmentLine,
   AlignmentSlot,
   AlignmentView,
+  GrammarCheckResult,
   RenderLine,
   RenderSegment
 } from "../types";
-import { formatLineLabel, useI18n, type Locale } from "../i18n";
+import { formatLineLabel, messages, useI18n, type Locale } from "../i18n";
 import { DiffToken } from "./DiffToken";
 
 interface HighlightViewProps {
@@ -21,6 +22,10 @@ interface HighlightViewProps {
   onToggleLegacySymbols?: () => void;
   selectedReferenceId?: string | null;
   onReferenceChange?: (referenceId: string) => void;
+  showAnalysisContent?: boolean;
+  analysisResultsByLineId?: Record<string, GrammarCheckResult>;
+  analysisLoadingByLineId?: Record<string, boolean>;
+  analysisErrorsByLineId?: Record<string, string>;
 }
 
 const MIN_ALIGNMENT_SLOT_WIDTH_EM = 2;
@@ -28,6 +33,15 @@ const MIN_ALIGNMENT_SLOT_WIDTH_EM = 2;
 type AlignmentSlotStyle = CSSProperties & {
   "--alignment-slot-width": string;
 };
+
+interface LineAnalysis {
+  state: "pending" | "loading" | "error" | "result";
+  hasError?: boolean;
+  statusText: string;
+  errorType?: string;
+  correctedText?: string;
+  explanation: string;
+}
 
 export function HighlightView({
   lines,
@@ -38,16 +52,20 @@ export function HighlightView({
   useLegacySymbols = !alignmentView,
   onToggleLegacySymbols,
   selectedReferenceId,
-  onReferenceChange
+  onReferenceChange,
+  showAnalysisContent = false,
+  analysisResultsByLineId = {},
+  analysisLoadingByLineId = {},
+  analysisErrorsByLineId = {}
 }: HighlightViewProps) {
   const { locale, messages: m } = useI18n();
   const shouldRenderAlignment = Boolean(alignmentView && highlightEnabled && !useLegacySymbols);
 
   return (
     <section className="panel result-panel" aria-labelledby="highlight-view-title">
-      <div className="panel-header">
-        <h2 id="highlight-view-title">{m.highlightTitle}</h2>
-        <div className="panel-header-actions">
+      <div className="panel-header highlight-panel-header">
+        <h2 id="highlight-view-title" className="sr-only">{m.highlightTitle}</h2>
+        <div className="panel-header-actions highlight-toolbar-left">
           {alignmentView ? (
             <ReferenceSelector
               alignmentView={alignmentView}
@@ -72,18 +90,38 @@ export function HighlightView({
       </div>
 
       {shouldRenderAlignment && alignmentView ? (
-        renderAlignmentGrid(alignmentView, selectedGroupId, onSelectGroup, locale)
+        renderAlignmentGrid(
+          alignmentView,
+          selectedGroupId,
+          onSelectGroup,
+          locale,
+          showAnalysisContent,
+          analysisResultsByLineId,
+          analysisLoadingByLineId,
+          analysisErrorsByLineId
+        )
       ) : (
         <div className="highlight-lines">
           {lines.map((line) => (
-            <div className={`highlight-line line-${line.type}`} key={line.id}>
-              <div className="line-label">{renderLineLabel(line, lines, locale)}</div>
-              <div className="sentence-line">
-                {highlightEnabled
-                  ? renderSegmentsWithSlots(line, selectedGroupId, onSelectGroup)
-                  : line.text}
+            <Fragment key={line.id}>
+              <div className={`highlight-line line-${line.type}`}>
+                <div className="line-label">{renderLineLabel(line, lines, locale)}</div>
+                <div className="sentence-line">
+                  {highlightEnabled
+                    ? renderSegmentsWithSlots(line, selectedGroupId, onSelectGroup)
+                    : line.text}
+                </div>
               </div>
-            </div>
+              {showAnalysisContent
+                ? renderInlineAnalysisRow(
+                    line,
+                    locale,
+                    analysisResultsByLineId,
+                    analysisLoadingByLineId,
+                    analysisErrorsByLineId
+                  )
+                : null}
+            </Fragment>
           ))}
         </div>
       )}
@@ -184,7 +222,11 @@ function renderAlignmentGrid(
   alignmentView: AlignmentView,
   selectedGroupId: string | null,
   onSelectGroup: (groupId: string) => void,
-  locale: Locale
+  locale: Locale,
+  showAnalysisContent: boolean,
+  analysisResultsByLineId: Record<string, GrammarCheckResult>,
+  analysisLoadingByLineId: Record<string, boolean>,
+  analysisErrorsByLineId: Record<string, string>
 ): ReactNode {
   return (
     <div
@@ -192,24 +234,181 @@ function renderAlignmentGrid(
       data-slot-count={alignmentView.slots.length}
     >
       {alignmentView.lines.map((line) => (
-        <div className={`alignment-row line-${line.type}`} key={line.id}>
-          <div className={`line-label alignment-row-label line-${line.type}`}>
-            {renderLineLabel(line, alignmentView.lines, locale)}
+        <Fragment key={line.id}>
+          <div className={`alignment-row line-${line.type}`}>
+            <div className={`line-label alignment-row-label line-${line.type}`}>
+              {renderLineLabel(line, alignmentView.lines, locale)}
+            </div>
+            <div className="alignment-row-content">
+              {line.cells.map((cell, index) =>
+                renderAlignmentCell(
+                  cell,
+                  alignmentView.slots[index],
+                  selectedGroupId,
+                  onSelectGroup
+                )
+              )}
+            </div>
           </div>
-          <div className="alignment-row-content">
-            {line.cells.map((cell, index) =>
-              renderAlignmentCell(
-                cell,
-                alignmentView.slots[index],
-                selectedGroupId,
-                onSelectGroup
+          {showAnalysisContent
+            ? renderAlignmentAnalysisRow(
+                line,
+                locale,
+                analysisResultsByLineId,
+                analysisLoadingByLineId,
+                analysisErrorsByLineId
               )
-            )}
-          </div>
-        </div>
+            : null}
+        </Fragment>
       ))}
     </div>
   );
+}
+
+function renderAlignmentAnalysisRow(
+  line: AlignmentLine,
+  locale: Locale,
+  analysisResultsByLineId: Record<string, GrammarCheckResult>,
+  analysisLoadingByLineId: Record<string, boolean>,
+  analysisErrorsByLineId: Record<string, string>
+): ReactNode {
+  return (
+    <div
+      className={`alignment-analysis-row analysis-for-${line.type}`}
+      data-analysis-for={line.id}
+    >
+      <div className="line-label alignment-row-label alignment-analysis-label">
+        {messages[locale].analysisLabel}
+      </div>
+      <div className="alignment-analysis-content">
+        {renderLineAnalysisCard(
+          resolveLineAnalysis(
+            line.id,
+            locale,
+            analysisResultsByLineId,
+            analysisLoadingByLineId,
+            analysisErrorsByLineId
+          ),
+          locale
+        )}
+      </div>
+    </div>
+  );
+}
+
+function renderInlineAnalysisRow(
+  line: RenderLine,
+  locale: Locale,
+  analysisResultsByLineId: Record<string, GrammarCheckResult>,
+  analysisLoadingByLineId: Record<string, boolean>,
+  analysisErrorsByLineId: Record<string, string>
+): ReactNode {
+  return (
+    <div className={`highlight-analysis-line analysis-for-${line.type}`} data-analysis-for={line.id}>
+      <div className="line-label">{messages[locale].analysisLabel}</div>
+      <div className="highlight-analysis-content">
+        {renderLineAnalysisCard(
+          resolveLineAnalysis(
+            line.id,
+            locale,
+            analysisResultsByLineId,
+            analysisLoadingByLineId,
+            analysisErrorsByLineId
+          ),
+          locale
+        )}
+      </div>
+    </div>
+  );
+}
+
+function resolveLineAnalysis(
+  lineId: string,
+  locale: Locale,
+  analysisResultsByLineId: Record<string, GrammarCheckResult>,
+  analysisLoadingByLineId: Record<string, boolean>,
+  analysisErrorsByLineId: Record<string, string>
+): LineAnalysis {
+  const m = messages[locale];
+
+  if (analysisLoadingByLineId[lineId]) {
+    return {
+      state: "loading",
+      statusText: m.analysisLoading,
+      explanation: m.analysisLoading
+    };
+  }
+
+  const error = analysisErrorsByLineId[lineId];
+  if (error) {
+    return {
+      state: "error",
+      hasError: true,
+      statusText: m.analysisFailed,
+      explanation: error
+    };
+  }
+
+  const result = analysisResultsByLineId[lineId];
+  if (result) {
+    return analysisFromGrammarResult(result, locale);
+  }
+
+  return {
+    state: "pending",
+    statusText: m.analysisPending,
+    explanation: m.analysisPending
+  };
+}
+
+function analysisFromGrammarResult(result: GrammarCheckResult, locale: Locale): LineAnalysis {
+  const m = messages[locale];
+
+  return {
+    state: "result",
+    hasError: result.has_error,
+    statusText: result.has_error ? m.analysisIncorrect : m.analysisCorrect,
+    correctedText: result.corrected_text,
+    explanation: result.explanation ?? ""
+  };
+}
+
+function renderLineAnalysisCard(result: LineAnalysis, locale: Locale): ReactNode {
+  const m = messages[locale];
+
+  return (
+    <div className={`line-analysis-card ${classForAnalysisState(result)}`}>
+      <span className="line-analysis-status">{result.statusText}</span>
+      <div className="line-analysis-detail-grid">
+        {result.errorType ? (
+          <>
+            <span className="line-analysis-field">{m.analysisErrorType}：</span>
+            <span>{result.errorType}</span>
+          </>
+        ) : null}
+        {result.correctedText ? (
+          <>
+            <span className="line-analysis-field">{m.analysisCorrection}：</span>
+            <span className="line-analysis-correction">{result.correctedText}</span>
+          </>
+        ) : null}
+        {result.explanation ? (
+          <>
+            <span className="line-analysis-field">{m.analysisReason}：</span>
+            <span>{result.explanation}</span>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function classForAnalysisState(result: LineAnalysis): string {
+  if (result.state === "loading" || result.state === "pending") {
+    return "is-pending";
+  }
+
+  return result.hasError ? "is-error" : "is-ok";
 }
 
 function getAlignmentSlotStyle(slot: AlignmentSlot): AlignmentSlotStyle {

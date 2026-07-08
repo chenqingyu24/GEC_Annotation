@@ -24,45 +24,34 @@ export function SampleNavigator({
     : "";
 
   return (
-    <nav className="sample-navigator" aria-label={m.sampleNavigatorAria}>
-      <button
-        className="secondary-button compact-button"
-        type="button"
-        onClick={() => onChange(currentIndex - 1)}
-        disabled={currentIndex <= 0}
-      >
-        {m.previousSample}
-      </button>
-
+    <nav className="sample-navigator sample-navigator-strip" aria-label={m.sampleNavigatorAria}>
       <div className="sample-status">
+        <span className="sample-navigator-label">{m.sampleNavigatorLabel}</span>
+        <strong className="sample-current-chip">{currentSampleLabel}</strong>
         <span className="sample-count">
           {currentIndex + 1} / {samples.length}
         </span>
-        <strong>{currentSampleLabel}</strong>
       </div>
 
-      <label className="select-label">
-        <span className="sr-only">{m.selectSample}</span>
-        <select
-          value={currentIndex}
-          onChange={(event) => onChange(Number(event.target.value))}
+      <div className="sample-navigation-actions">
+        <button
+          className="secondary-button compact-button"
+          type="button"
+          onClick={() => onChange(currentIndex - 1)}
+          disabled={currentIndex <= 0}
         >
-          {samples.map((sample, index) => (
-            <option value={index} key={`${sample.id}-${index}`}>
-              {index + 1}. {formatSampleLabel(sample.id, locale)}
-            </option>
-          ))}
-        </select>
-      </label>
+          {m.previousSample}
+        </button>
 
-      <button
-        className="secondary-button compact-button"
-        type="button"
-        onClick={() => onChange(currentIndex + 1)}
-        disabled={currentIndex >= samples.length - 1}
-      >
-        {m.nextSample}
-      </button>
+        <button
+          className="secondary-button compact-button"
+          type="button"
+          onClick={() => onChange(currentIndex + 1)}
+          disabled={currentIndex >= samples.length - 1}
+        >
+          {m.nextSample}
+        </button>
+      </div>
     </nav>
   );
 }

@@ -15,74 +15,24 @@ export function ModelAnalysisPanel({
   initialSelectedText = "",
   initialResult = null
 }: ModelAnalysisPanelProps) {
-  const { locale, messages: m } = useI18n();
-  const defaultModelOptions = useMemo(() => defaultModelOptionsForLocale(locale), [locale]);
-  const initialModelOptions =
-    DEFAULT_MODEL_API_BASE_URL === BROWSER_DEMO_API_BASE_URL
-      ? browserDemoModelOptions(defaultModelOptions)
-      : defaultModelOptions;
-  const [config, setConfig] = useState<ModelConfig>({
-    baseUrl: DEFAULT_MODEL_API_BASE_URL,
-    apiKey: "",
-    selectedModel: initialModelOptions[0]?.id ?? "",
-    models: initialModelOptions
-  });
+  const { messages: m } = useI18n();
+  const {
+    config,
+    updateConfig,
+    refreshModels,
+    loadingModels,
+    message,
+    setMessage,
+    error,
+    setError
+  } = useModelConfig();
   const [inputText, setInputText] = useState(initialInputText);
   const [selectedText, setSelectedText] = useState(initialSelectedText);
   const [result, setResult] = useState<GrammarCheckResult | null>(initialResult);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
-  const [loadingModels, setLoadingModels] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
 
-  useEffect(() => {
-    setConfig((currentConfig) => {
-      if (!hasOnlyDefaultModelIds(currentConfig.models)) {
-        return currentConfig;
-      }
-
-      const localizedModels =
-        DEFAULT_MODEL_API_BASE_URL === BROWSER_DEMO_API_BASE_URL
-          ? browserDemoModelOptions(defaultModelOptions)
-          : defaultModelOptions;
-
-      return {
-        ...currentConfig,
-        models: localizedModels,
-        selectedModel: localizedModels.some((model) => model.id === currentConfig.selectedModel)
-          ? currentConfig.selectedModel
-          : localizedModels[0]?.id ?? ""
-      };
-    });
-  }, [defaultModelOptions]);
-
-  const updateConfig = <Key extends keyof ModelConfig>(key: Key, value: ModelConfig[Key]) => {
-    setConfig((currentConfig) => ({
-      ...currentConfig,
-      [key]: value
-    }));
-  };
-
   const handleRefreshModels = async () => {
-    setError("");
-    setMessage("");
-    setLoadingModels(true);
-
-    try {
-      const models = await fetchModelList(config);
-      setConfig((currentConfig) => ({
-        ...currentConfig,
-        models,
-        selectedModel: models.some((model) => model.id === currentConfig.selectedModel)
-          ? currentConfig.selectedModel
-          : models[0]?.id ?? ""
-      }));
-      setMessage(m.modelsLoaded(models.length));
-    } catch (refreshError) {
-      setError(messageFromError(refreshError));
-    } finally {
-      setLoadingModels(false);
-    }
+    await refreshModels();
   };
 
   const handleAnalyze = async () => {
@@ -134,36 +84,7 @@ export function ModelAnalysisPanel({
         <h2 id="model-analysis-title">{m.modelAnalysis}</h2>
       </div>
 
-      <div className="model-config-grid">
-        <label className="field">
-          <span className="field-label">{m.apiKeyLabel}</span>
-          <input
-            type="password"
-            value={config.apiKey}
-            onChange={(event) => updateConfig("apiKey", event.target.value)}
-            placeholder={m.optional}
-            autoComplete="off"
-          />
-        </label>
-
-        <label className="field">
-          <span className="field-label">{m.selectModel}</span>
-          <select
-            value={config.selectedModel}
-            onChange={(event) => updateConfig("selectedModel", event.target.value)}
-          >
-            {config.models.length === 0 ? (
-              <option value="">{m.refreshModelFirst}</option>
-            ) : (
-              config.models.map((model) => (
-                <option value={model.id} key={model.id}>
-                  {model.label}
-                </option>
-              ))
-            )}
-          </select>
-        </label>
-      </div>
+      <ModelConfigFields config={config} onConfigChange={updateConfig} />
 
       <label className="field model-text-field">
         <span className="field-label">{m.textToAnalyze}</span>
@@ -237,6 +158,139 @@ function ModelResult({ result }: { result: GrammarCheckResult }) {
   );
 }
 
+export interface UseModelConfigResult {
+  config: ModelConfig;
+  updateConfig: <Key extends keyof ModelConfig>(key: Key, value: ModelConfig[Key]) => void;
+  refreshModels: () => Promise<void>;
+  loadingModels: boolean;
+  message: string;
+  setMessage: (message: string) => void;
+  error: string;
+  setError: (error: string) => void;
+}
+
+export function useModelConfig(): UseModelConfigResult {
+  const { locale, messages: m } = useI18n();
+  const defaultModelOptions = useMemo(() => defaultModelOptionsForLocale(locale), [locale]);
+  const initialModelOptions =
+    DEFAULT_MODEL_API_BASE_URL === BROWSER_DEMO_API_BASE_URL
+      ? browserDemoModelOptions(defaultModelOptions)
+      : defaultModelOptions;
+  const [config, setConfig] = useState<ModelConfig>({
+    baseUrl: DEFAULT_MODEL_API_BASE_URL,
+    apiKey: "",
+    selectedModel: initialModelOptions[0]?.id ?? "",
+    models: initialModelOptions
+  });
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loadingModels, setLoadingModels] = useState(false);
+
+  useEffect(() => {
+    setConfig((currentConfig) => {
+      if (!hasOnlyDefaultModelIds(currentConfig.models)) {
+        return currentConfig;
+      }
+
+      const localizedModels =
+        DEFAULT_MODEL_API_BASE_URL === BROWSER_DEMO_API_BASE_URL
+          ? browserDemoModelOptions(defaultModelOptions)
+          : defaultModelOptions;
+
+      return {
+        ...currentConfig,
+        models: localizedModels,
+        selectedModel: localizedModels.some((model) => model.id === currentConfig.selectedModel)
+          ? currentConfig.selectedModel
+          : localizedModels[0]?.id ?? ""
+      };
+    });
+  }, [defaultModelOptions]);
+
+  const updateConfig = <Key extends keyof ModelConfig>(key: Key, value: ModelConfig[Key]) => {
+    setConfig((currentConfig) => ({
+      ...currentConfig,
+      [key]: value
+    }));
+  };
+
+  const refreshModels = async () => {
+    setError("");
+    setMessage("");
+    setLoadingModels(true);
+
+    try {
+      const models = await fetchModelList(config);
+      setConfig((currentConfig) => ({
+        ...currentConfig,
+        models,
+        selectedModel: models.some((model) => model.id === currentConfig.selectedModel)
+          ? currentConfig.selectedModel
+          : models[0]?.id ?? ""
+      }));
+      setMessage(m.modelsLoaded(models.length));
+    } catch (refreshError) {
+      setError(messageFromError(refreshError));
+    } finally {
+      setLoadingModels(false);
+    }
+  };
+
+  return {
+    config,
+    updateConfig,
+    refreshModels,
+    loadingModels,
+    message,
+    setMessage,
+    error,
+    setError
+  };
+}
+
+export function ModelConfigFields({
+  config,
+  onConfigChange
+}: {
+  config: ModelConfig;
+  onConfigChange: <Key extends keyof ModelConfig>(key: Key, value: ModelConfig[Key]) => void;
+}) {
+  const { messages: m } = useI18n();
+
+  return (
+    <div className="model-config-grid">
+      <label className="field">
+        <span className="field-label">{m.apiKeyLabel}</span>
+        <input
+          type="password"
+          value={config.apiKey}
+          onChange={(event) => onConfigChange("apiKey", event.target.value)}
+          placeholder={m.optional}
+          autoComplete="off"
+        />
+      </label>
+
+      <label className="field">
+        <span className="field-label">{m.selectModel}</span>
+        <select
+          value={config.selectedModel}
+          onChange={(event) => onConfigChange("selectedModel", event.target.value)}
+        >
+          {config.models.length === 0 ? (
+            <option value="">{m.refreshModelFirst}</option>
+          ) : (
+            config.models.map((model) => (
+              <option value={model.id} key={model.id}>
+                {model.label}
+              </option>
+            ))
+          )}
+        </select>
+      </label>
+    </div>
+  );
+}
+
 function readSelectedText(): string {
   if (typeof window === "undefined") {
     return "";
@@ -287,6 +341,6 @@ function hasOnlyDefaultModelIds(modelOptions: ModelOption[]): boolean {
   return modelOptions.every((model) => defaultIds.has(model.id));
 }
 
-function messageFromError(error: unknown): string {
+export function messageFromError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }

@@ -92,6 +92,16 @@ describe("styles", () => {
   it("does not include JSON preview styles after removing the preview panel", () => {
     expect(css).not.toMatch(/\.json-preview\s*{/);
   });
+
+  it("keeps compact model actions horizontal and starts highlight controls from the left", () => {
+    expect(blockFor(".model-action-row-horizontal")).toContain("display: flex");
+    expect(blockFor(".model-action-row-horizontal")).toContain("flex-wrap: nowrap");
+    expect(blockFor(".compact-model-analysis-panel .model-action-row-horizontal")).toContain(
+      "margin-left: 0"
+    );
+    expect(blockFor(".highlight-toolbar-left")).toContain("justify-content: flex-start");
+    expect(blockFor(".highlight-toolbar-left")).toContain("width: 100%");
+  });
 });
 
 function blockFor(selector: string): string {

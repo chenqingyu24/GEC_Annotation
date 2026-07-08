@@ -106,6 +106,10 @@ describe("HighlightView", () => {
     );
 
     expect(html).toContain("alignment-grid");
+    expect(html).toContain("highlight-panel-header");
+    expect(html).toContain("highlight-toolbar-left");
+    expect(html).toContain('id="highlight-view-title" class="sr-only"');
+    expect(html).not.toContain('<h2 id="highlight-view-title">多行高亮</h2>');
     expect(html).toContain("参考基准");
     expect(html).toContain("旧符号");
     expect(html).not.toContain("空槽位");
@@ -155,6 +159,175 @@ describe("HighlightView", () => {
     expect(countOccurrences(html, 'class="line-label alignment-row-label')).toBe(3);
     expect(html).toContain('style="--alignment-slot-width:7em"');
     expect(html).not.toContain("grid-template-columns:");
+  });
+
+  it("inserts full-width analysis rows after alignment rows when enabled", () => {
+    const sample: Sample = {
+      id: "analysis_rows",
+      source: "他喜欢苹果。",
+      references: ["他喜欢香蕉。"],
+      candidates: [
+        { id: "model_a", text: "他喜欢香蕉。" },
+        { id: "model_b", text: "他喜欢苹果。" }
+      ]
+    };
+    const view = buildDiffView(sample);
+    const alignmentView = buildAlignmentView(
+      view.source,
+      view.targets,
+      view.edit_groups,
+      "ref_1"
+    );
+
+    const html = renderToStaticMarkup(
+      <HighlightView
+        lines={view.render_lines}
+        alignmentView={alignmentView}
+        selectedGroupId={null}
+        onSelectGroup={() => undefined}
+        highlightEnabled={true}
+        useLegacySymbols={false}
+        onToggleLegacySymbols={() => undefined}
+        selectedReferenceId="ref_1"
+        onReferenceChange={() => undefined}
+        showAnalysisContent={true}
+      />
+    );
+
+    expect(countOccurrences(html, 'class="alignment-row line-')).toBe(4);
+    expect(countOccurrences(html, 'class="alignment-row-content"')).toBe(4);
+    expect(countOccurrences(html, "alignment-analysis-row")).toBe(4);
+    expect(html).toContain('data-analysis-for="source"');
+    expect(html).toContain('data-analysis-for="ref_1"');
+    expect(html).toContain('data-analysis-for="model_a"');
+    expect(html).toContain('data-analysis-for="model_b"');
+    expect(html.indexOf('class="alignment-row line-source"')).toBeLessThan(
+      html.indexOf('data-analysis-for="source"')
+    );
+    expect(html.indexOf('data-analysis-for="source"')).toBeLessThan(
+      html.indexOf('class="alignment-row line-reference"')
+    );
+    expect(html).toContain("分析");
+    expect(html).toContain("待分析");
+  });
+
+  it("keeps analysis rows out of the alignment table when disabled", () => {
+    const sample: Sample = {
+      id: "analysis_rows_disabled",
+      source: "他喜欢苹果。",
+      references: ["他喜欢香蕉。"],
+      candidates: [{ id: "model_a", text: "他喜欢香蕉。" }]
+    };
+    const view = buildDiffView(sample);
+    const alignmentView = buildAlignmentView(
+      view.source,
+      view.targets,
+      view.edit_groups,
+      "ref_1"
+    );
+
+    const html = renderToStaticMarkup(
+      <HighlightView
+        lines={view.render_lines}
+        alignmentView={alignmentView}
+        selectedGroupId={null}
+        onSelectGroup={() => undefined}
+        highlightEnabled={true}
+        useLegacySymbols={false}
+        onToggleLegacySymbols={() => undefined}
+        selectedReferenceId="ref_1"
+        onReferenceChange={() => undefined}
+        showAnalysisContent={false}
+      />
+    );
+
+    expect(countOccurrences(html, 'class="alignment-row line-')).toBe(3);
+    expect(countOccurrences(html, 'class="alignment-row-content"')).toBe(3);
+    expect(html).not.toContain("alignment-analysis-row");
+    expect(html).not.toContain('data-analysis-for="source"');
+  });
+
+  it("renders model grammar results inside analysis rows when provided", () => {
+    const sample: Sample = {
+      id: "model_analysis_results",
+      source: "他喜欢苹果。",
+      references: ["他喜欢香蕉。"],
+      candidates: [{ id: "model_a", text: "他喜欢香蕉。" }]
+    };
+    const view = buildDiffView(sample);
+    const alignmentView = buildAlignmentView(
+      view.source,
+      view.targets,
+      view.edit_groups,
+      "ref_1"
+    );
+
+    const html = renderToStaticMarkup(
+      <HighlightView
+        lines={view.render_lines}
+        alignmentView={alignmentView}
+        selectedGroupId={null}
+        onSelectGroup={() => undefined}
+        highlightEnabled={true}
+        useLegacySymbols={false}
+        selectedReferenceId="ref_1"
+        showAnalysisContent={true}
+        analysisResultsByLineId={{
+          source: {
+            has_error: true,
+            corrected_text: "他喜欢香蕉。",
+            explanation: "苹果应改为香蕉。"
+          },
+          model_a: {
+            has_error: false,
+            explanation: "句子通顺。"
+          }
+        }}
+      />
+    );
+
+    expect(html).toContain('data-analysis-for="source"');
+    expect(html).toContain("不正确");
+    expect(html).toContain("纠正句");
+    expect(html).toContain("他喜欢香蕉。");
+    expect(html).toContain("苹果应改为香蕉。");
+    expect(html).toContain('data-analysis-for="model_a"');
+    expect(html).toContain("正确");
+    expect(html).toContain("句子通顺。");
+  });
+
+  it("renders loading and per-line analysis errors in analysis rows", () => {
+    const sample: Sample = {
+      id: "model_analysis_states",
+      source: "他喜欢苹果。",
+      references: ["他喜欢香蕉。"],
+      candidates: [{ id: "model_a", text: "他喜欢香蕉。" }]
+    };
+    const view = buildDiffView(sample);
+    const alignmentView = buildAlignmentView(
+      view.source,
+      view.targets,
+      view.edit_groups,
+      "ref_1"
+    );
+
+    const html = renderToStaticMarkup(
+      <HighlightView
+        lines={view.render_lines}
+        alignmentView={alignmentView}
+        selectedGroupId={null}
+        onSelectGroup={() => undefined}
+        highlightEnabled={true}
+        useLegacySymbols={false}
+        selectedReferenceId="ref_1"
+        showAnalysisContent={true}
+        analysisLoadingByLineId={{ source: true }}
+        analysisErrorsByLineId={{ model_a: "模型服务暂不可用" }}
+      />
+    );
+
+    expect(html).toContain("分析中");
+    expect(html).toContain("模型服务暂不可用");
   });
 
   it("marks plain and difference slots so extra row width can be distributed", () => {

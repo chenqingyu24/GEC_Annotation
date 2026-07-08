@@ -10,8 +10,8 @@ describe("ModelAnalysisPanel", () => {
     expect(html).not.toContain("服务地址");
     expect(html).not.toContain("127.0.0.1");
     expect(html).not.toContain("localhost");
-    expect(html).toContain("大模型 API Key，本地模型可留空");
-    expect(html).toContain("API Key");
+    expect(html).toContain(">API Key<");
+    expect(html).not.toContain("大模型 API Key，本地模型可留空");
     expect(html).toContain("选择模型");
     expect(html).toContain("rule-based-demo");
     expect(html).toContain("DeepSeek V4 Flash");
