@@ -4,17 +4,20 @@ import App, { BatchModelAnalysisPanel, ResultContent, ResultsHeading } from "./A
 import type { DiffView, ModelConfig } from "./types";
 
 const modelConfig: ModelConfig = {
-  baseUrl: "__browser_demo__",
+  providerId: "deepseek",
+  baseUrl: "https://api.deepseek.com",
+  customBaseUrl: "",
   apiKey: "",
-  selectedModel: "rule-based-demo",
+  selectedModel: "model-a",
   models: [
     {
-      id: "rule-based-demo",
-      label: "本地规则演示",
-      provider: "local",
+      id: "model-a",
+      label: "model-a",
+      provider: "remote",
       requires_api_key: false
     }
-  ]
+  ],
+  modelListReady: true
 };
 
 describe("ResultContent", () => {
@@ -178,12 +181,23 @@ describe("ResultContent", () => {
     expect(html).toContain("compact-model-analysis-panel");
     expect(html).toContain("model-action-row-horizontal");
     expect(html).toContain('aria-labelledby="batch-model-analysis-title"');
+    expect(html).toContain(">服务商<");
     expect(html).toContain(">API Key<");
     expect(html).not.toContain("大模型 API Key，本地模型可留空");
-    expect(html).toContain("选择模型");
+    expect(html).toContain(">模型<");
+    expect(html).not.toContain(">API URL<");
     expect(html).toContain("刷新模型");
     expect(html).toContain("批量分析");
-    expect(html).toContain("rule-based-demo");
+    expect(html).toContain("model-a");
+
+    const actionRow = html.slice(
+      html.indexOf('class="button-row model-action-row model-action-row-horizontal"'),
+      html.indexOf('class="status-stack"')
+    );
+
+    expect(html).not.toContain('class="model-refresh-control"');
+    expect(actionRow).toContain('class="secondary-button compact-button"');
+    expect(actionRow.indexOf("刷新模型")).toBeLessThan(actionRow.indexOf("批量分析"));
   });
 
   it("disables batch analysis controls while batch analysis is running", () => {

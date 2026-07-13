@@ -30,35 +30,13 @@ npm run dev
 
 Vite 会在终端输出本地访问地址，通常是 `http://localhost:5173/`。
 
-## 启动本地模型后端
+## 配置模型 API
 
-仓库包含一个无第三方依赖的本地模型代理后端，用于先跑通“模型分析”面板。它提供 `GET /models` 和 `POST /grammar-check`，默认包含本地演示模型 `rule-based-demo`，并可代理 DeepSeek 的 OpenAI-compatible Chat API。
+“模型分析”面板由浏览器直接调用 OpenAI 兼容 API，不依赖本地模型代理后端。先选择服务商、填写 API Key、刷新模型列表，再从模型下拉框选择具体模型。内置 DeepSeek、GPT、Qwen、MiniMax、GLM、Kimi 和 Claude 的 API URL；选择“其他兼容服务”时，才需要填写 API URL 和自定义模型 ID。
 
-如果已创建 conda 环境，可以直接运行：
+刷新模型时，前端请求 `GET {API URL}/models`；分析时，前端请求 `POST {API URL}/chat/completions`。刷新成功后会合并服务商推荐模型和账户实际可用模型；刷新失败时，内置服务商仍可使用推荐模型。目标服务必须允许来自当前网页的 CORS 请求；浏览器无法绕过不允许跨域的服务。
 
-```bat
-backend\start_backend_conda.bat
-```
-
-首次创建环境：
-
-```bash
-D:\Anaconda\Scripts\conda.exe env create -f backend\environment.yml
-```
-
-也可以手动用 Python 启动：
-
-```bash
-python backend/server.py --host 127.0.0.1 --port 8003
-```
-
-如果使用 Codex bundled Python：
-
-```bash
-C:\Users\XY\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe backend/server.py --host 127.0.0.1 --port 8003
-```
-
-前端默认连接 `http://127.0.0.1:8003`，页面不会暴露服务地址输入框。如需改后端地址，可在启动 Vite 前设置 `VITE_MODEL_API_BASE_URL`。真实本地 GEC 模型接入时，可以替换 `backend/server.py` 中的 `check_grammar` 函数；真实 DeepSeek 调用需要在页面填写 API Key。
+浏览器只会在 `localStorage` 中保存服务商、模型和“其他兼容服务”的 API URL；API Key 仅保存在当前页面内存中，刷新页面即清除。
 
 ## 测试
 
@@ -96,8 +74,7 @@ python backend/server.py --host 127.0.0.1 --port 8003
 http://localhost:8003/
 ```
 
-此模式下，后端会同时提供前端静态文件和模型接口：`GET /`、`GET /assets/...`、`GET /models`、`POST /grammar-check`。
-页面与接口同源，适合本地模型服务的日常使用。
+此模式下，后端仅用于提供前端静态文件：`GET /`、`GET /assets/...`。模型分析仍会直接请求用户填写的 API URL。
 
 ## 手动输入使用
 
@@ -160,71 +137,14 @@ http://localhost:8003/
 
 ## 模型分析接口
 
-结果区包含“模型分析”面板，即使未加载样本也会显示。面板可接入大模型 API、本地中文语法纠错模型或本地中文语法检测模型。使用时可填写大模型 API Key，点击“刷新模型”获取模型列表，然后输入待分析文本，或在页面中拖选文本后点击“大模型分析”。如果同时存在页面选中文本和面板文本框内容，优先分析页面选中文本。API Key 只保存在当前页面会话中，刷新页面后会清空。
+结果区包含“模型分析”面板，即使未加载样本也会显示。选择服务商并填写 API Key 后，点击“刷新模型”可从 OpenAI 兼容的 `GET /models` 接口加载候选模型；再从下拉框选择模型。分析时，前端会向 `POST /chat/completions` 发送标准 Chat Completions 请求，并要求模型返回 JSON。如果同时存在页面选中文本和面板文本框内容，优先分析页面选中文本。模型内容可以是纯 JSON，也可以置于 Markdown JSON 代码块中；两种格式都会被解析。
 
-前端默认通过本地模型代理后端访问模型服务。后端提供以下接口。
-
-模型列表：
-
-```http
-GET /models
-Authorization: Bearer <api-key>
-```
-
-响应可以是通用格式：
-
-```json
-{
-  "models": [
-    {
-      "id": "rule-based-demo",
-      "label": "本地规则演示",
-      "provider": "local",
-      "requires_api_key": false
-    },
-    {
-      "id": "deepseek-v4-flash",
-      "label": "DeepSeek V4 Flash",
-      "provider": "deepseek",
-      "requires_api_key": true
-    }
-  ]
-}
-```
-
-前端也兼容旧字符串数组和 OpenAI-compatible 格式：
-
-```json
-{
-  "data": [
-    { "id": "gec-model-a" },
-    { "id": "gec-model-b" }
-  ]
-}
-```
-
-语法分析：
-
-```http
-POST /grammar-check
-Content-Type: application/json
-Authorization: Bearer <api-key>
-```
-
-请求：
-
-```json
-{
-  "text": "我昨天去学校。",
-  "model": "gec-model-a"
-}
-```
-
-响应必须是 JSON，并包含 `has_error`：
+模型输出的 JSON 必须包含 `has_error`。错误句应包含 `error_type`，前端将显示“错误类型”、“纠正句”和“解释”；未返回 `error_type` 时会显示“未分类”：
 
 ```json
 {
   "has_error": true,
+  "error_type": "缺少动态助词",
   "corrected_text": "我昨天去了学校。",
   "explanation": "句子缺少动态助词“了”。"
 }

@@ -96,11 +96,23 @@ describe("styles", () => {
   it("keeps compact model actions horizontal and starts highlight controls from the left", () => {
     expect(blockFor(".model-action-row-horizontal")).toContain("display: flex");
     expect(blockFor(".model-action-row-horizontal")).toContain("flex-wrap: nowrap");
+    expect(css).not.toMatch(/\.model-action-row-horizontal\s*\{\s*flex-wrap:\s*wrap;\s*\}/);
     expect(blockFor(".compact-model-analysis-panel .model-action-row-horizontal")).toContain(
       "margin-left: 0"
     );
     expect(blockFor(".highlight-toolbar-left")).toContain("justify-content: flex-start");
     expect(blockFor(".highlight-toolbar-left")).toContain("width: 100%");
+  });
+
+  it("stacks analysis details below the verdict and centers the analysis label", () => {
+    expect(blockFor(".line-analysis-card")).toContain("grid-template-columns: 1fr");
+    expect(blockFor(".line-analysis-detail-grid")).toContain("grid-template-columns: 1fr");
+    expect(blockFor(".alignment-analysis-label")).toContain("align-items: center");
+    expect(blockFor(".alignment-analysis-label")).toContain("justify-content: center");
+    expect(blockFor(".alignment-analysis-label")).toContain("text-align: center");
+    expect(blockFor(".highlight-analysis-line > .line-label")).toContain("align-items: center");
+    expect(blockFor(".highlight-analysis-line > .line-label")).toContain("justify-content: center");
+    expect(blockFor(".highlight-analysis-line > .line-label")).toContain("text-align: center");
   });
 });
 

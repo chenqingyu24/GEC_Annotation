@@ -368,6 +368,7 @@ function analysisFromGrammarResult(result: GrammarCheckResult, locale: Locale): 
     state: "result",
     hasError: result.has_error,
     statusText: result.has_error ? m.analysisIncorrect : m.analysisCorrect,
+    errorType: result.has_error ? result.error_type?.trim() || m.analysisUncategorized : undefined,
     correctedText: result.corrected_text,
     explanation: result.explanation ?? ""
   };
@@ -381,22 +382,22 @@ function renderLineAnalysisCard(result: LineAnalysis, locale: Locale): ReactNode
       <span className="line-analysis-status">{result.statusText}</span>
       <div className="line-analysis-detail-grid">
         {result.errorType ? (
-          <>
+          <div className="line-analysis-detail-row">
             <span className="line-analysis-field">{m.analysisErrorType}：</span>
             <span>{result.errorType}</span>
-          </>
+          </div>
         ) : null}
         {result.correctedText ? (
-          <>
+          <div className="line-analysis-detail-row">
             <span className="line-analysis-field">{m.analysisCorrection}：</span>
             <span className="line-analysis-correction">{result.correctedText}</span>
-          </>
+          </div>
         ) : null}
         {result.explanation ? (
-          <>
+          <div className="line-analysis-detail-row">
             <span className="line-analysis-field">{m.analysisReason}：</span>
             <span>{result.explanation}</span>
-          </>
+          </div>
         ) : null}
       </div>
     </div>

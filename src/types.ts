@@ -119,11 +119,24 @@ export interface DiffView {
 }
 
 export interface ModelConfig {
+  providerId: ModelProviderId;
   baseUrl: string;
+  customBaseUrl: string;
   apiKey: string;
   selectedModel: string;
   models: ModelOption[];
+  modelListReady: boolean;
 }
+
+export type ModelProviderId =
+  | "deepseek"
+  | "openai"
+  | "qwen"
+  | "minimax"
+  | "glm"
+  | "kimi"
+  | "claude"
+  | "other";
 
 export interface ModelOption {
   id: string;
@@ -139,6 +152,7 @@ export interface GrammarCheckRequest {
 
 export interface GrammarCheckResult {
   has_error: boolean;
+  error_type?: string;
   corrected_text?: string;
   explanation?: string;
 }

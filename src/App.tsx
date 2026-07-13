@@ -8,6 +8,7 @@ import {
 } from "./components/ManualInputPanel";
 import {
   ModelConfigFields,
+  canRefreshModelList,
   messageFromError,
   useModelConfig
 } from "./components/ModelAnalysisPanel";
@@ -187,6 +188,11 @@ function AppContent({
 
     if (!currentAlignmentView) {
       setModelError(m.emptySample);
+      return;
+    }
+
+    if (config.apiKey.trim() === "") {
+      setModelError(m.fillApiKey);
       return;
     }
 
@@ -475,13 +481,20 @@ export function BatchModelAnalysisPanel({
       <div className="panel-header">
         <h2 id="batch-model-analysis-title">{m.modelAnalysis}</h2>
       </div>
-      <ModelConfigFields config={config} onConfigChange={onConfigChange} />
+      <ModelConfigFields
+        config={config}
+        onConfigChange={onConfigChange}
+        onRefreshModels={onRefreshModels}
+        loadingModels={loadingModels}
+        refreshDisabled={batchAnalyzing}
+        showRefreshControl={false}
+      />
       <div className="button-row model-action-row model-action-row-horizontal">
         <button
           className="secondary-button compact-button"
           type="button"
           onClick={onRefreshModels}
-          disabled={loadingModels || batchAnalyzing}
+          disabled={loadingModels || batchAnalyzing || !canRefreshModelList(config)}
         >
           {loadingModels ? m.refreshingModels : m.refreshModels}
         </button>

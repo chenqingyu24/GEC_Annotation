@@ -275,12 +275,14 @@ describe("HighlightView", () => {
         analysisResultsByLineId={{
           source: {
             has_error: true,
+            error_type: "语序不当",
             corrected_text: "他喜欢香蕉。",
             explanation: "苹果应改为香蕉。"
           },
           model_a: {
-            has_error: false,
-            explanation: "句子通顺。"
+            has_error: true,
+            corrected_text: "他喜欢苹果。",
+            explanation: "模型未返回错误分类。"
           }
         }}
       />
@@ -288,12 +290,18 @@ describe("HighlightView", () => {
 
     expect(html).toContain('data-analysis-for="source"');
     expect(html).toContain("不正确");
+    expect(html).toContain("错误类型");
+    expect(html).toContain("语序不当");
     expect(html).toContain("纠正句");
     expect(html).toContain("他喜欢香蕉。");
+    expect(html).toContain("解释");
     expect(html).toContain("苹果应改为香蕉。");
+    expect(html.indexOf("不正确")).toBeLessThan(html.indexOf("错误类型"));
+    expect(html.indexOf("错误类型")).toBeLessThan(html.indexOf("纠正句"));
+    expect(html.indexOf("纠正句")).toBeLessThan(html.indexOf("解释"));
     expect(html).toContain('data-analysis-for="model_a"');
-    expect(html).toContain("正确");
-    expect(html).toContain("句子通顺。");
+    expect(html).toContain("未分类");
+    expect(html).toContain("模型未返回错误分类。");
   });
 
   it("renders loading and per-line analysis errors in analysis rows", () => {
